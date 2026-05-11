@@ -62,27 +62,31 @@
       var album  = sleeve.getAttribute('data-album');
       if (!artist || !album) return;
 
-      sleeve.classList.add('loading');
       var query = encodeURIComponent(artist + ' ' + album);
       fetch('https://itunes.apple.com/search?term=' + query + '&media=music&entity=album&limit=1')
         .then(function (r) { return r.json(); })
         .then(function (data) {
-          sleeve.classList.remove('loading');
           if (!data.results || !data.results.length) return;
           var artUrl = data.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+          var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
           var img = document.createElement('img');
           img.className = 'album-sleeve-art';
           img.alt = album + ' by ' + artist;
-          img.src = artUrl;
-          var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
-          sleeve.insertBefore(img, placeholder || sleeve.firstChild);
+          // Insert after placeholder so art (z-index:1) is above it in both DOM order and z-index
+          if (placeholder) {
+            placeholder.insertAdjacentElement('afterend', img);
+          } else {
+            sleeve.insertBefore(img, sleeve.firstChild);
+          }
           img.addEventListener('load', function () {
             if (placeholder) placeholder.style.display = 'none';
           });
+          img.addEventListener('error', function () {
+            img.remove();
+          });
+          img.src = artUrl;
         })
-        .catch(function () {
-          sleeve.classList.remove('loading');
-        });
+        .catch(function () { /* fetch failed — placeholder stays */ });
     });
   }
 

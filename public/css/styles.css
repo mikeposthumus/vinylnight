@@ -437,6 +437,7 @@ ul { list-style: none; }
   height: 100%;
   object-fit: cover;
   opacity: 0.7;
+  z-index: 1;
   transition: opacity 0.2s;
 }
 
@@ -446,7 +447,7 @@ ul { list-style: none; }
 
 .album-sleeve-meta {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   background: linear-gradient(transparent, rgba(8, 14, 10, 0.92));
   padding-top: 1.5rem;
   margin: -0.875rem;
@@ -474,7 +475,7 @@ ul { list-style: none; }
   font-size: 0.68rem;
   color: var(--text-dim);
   letter-spacing: 0.1em;
-  z-index: 1;
+  z-index: 2;
 }
 
 /* Album sleeve placeholder (no art yet) */
