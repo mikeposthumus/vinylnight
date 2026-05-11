@@ -82,13 +82,13 @@
       <div class="tab-panel active" id="tab-now">
 
         <div class="access-notice" id="state-guest">
-          <p><strong>Listening in.</strong> <a href="profile.html">Sign in</a> to request membership and add your vinyl selections.</p>
+          <p><strong>Listening in.</strong> <a href="profile.html">Sign in</a> to view membership details.</p>
         </div>
         <div class="access-notice" style="display: none;" id="state-nonmember">
-          <p><strong>You're not a member of this group.</strong> Members vote to approve new members. <button class="btn btn-outline" style="margin-left: 1rem; padding: 0.4rem 1rem; font-size: 0.72rem;" onclick="requestJoin()">Request to Join</button></p>
+          <p><strong>This group is by invitation only.</strong> A founder must invite you to join.</p>
         </div>
         <div class="access-notice" style="display: none; border-left-color: var(--accent-bright);" id="state-member">
-          <p><strong>You're a member.</strong> Add your album selection below. All members must approve new join requests.</p>
+          <p><strong>You're a member.</strong> Add your album selection below.</p>
         </div>
 
         <div id="now-playing-content">
@@ -100,10 +100,23 @@
       <!-- ── MEMBERS ────────────────────────────────────────────── -->
       <div class="tab-panel" id="tab-members">
 
-        <div class="approvals-section" style="display: none;" id="pending-approvals">
-          <p class="approvals-title">Pending Join Requests</p>
-          <p class="text-xs text-muted mb-3">All current members must approve a new member. One rejection blocks the request.</p>
-          <div id="pending-list"></div>
+        <!-- Invite section — rendered by JS for founders only -->
+        <div id="invite-section" style="display: none; margin-bottom: 2rem;">
+          <div id="invite-form-wrap">
+            <button class="btn btn-outline" id="invite-toggle-btn" onclick="toggleInviteForm()">Invite Member</button>
+          </div>
+          <div id="invite-form" style="display: none; margin-top: 1rem; max-width: 420px;">
+            <div id="invite-error" class="form-hint" style="color: var(--accent-bright); display: none; margin-bottom: 0.75rem;"></div>
+            <div style="display: flex; gap: 0.75rem; align-items: flex-end;">
+              <div style="flex: 1;">
+                <label for="invite-username" style="margin-bottom: 0.4rem; display: block;">Username</label>
+                <input type="text" id="invite-username" placeholder="their-username" autocomplete="off">
+              </div>
+              <button type="button" class="btn btn-primary" onclick="sendInvite()">Send Invite</button>
+              <button type="button" class="btn btn-ghost" onclick="toggleInviteForm()">Cancel</button>
+            </div>
+            <div id="invite-success" style="display: none; margin-top: 0.75rem;" class="form-hint"></div>
+          </div>
         </div>
 
         <div class="section-header mb-3">
@@ -113,14 +126,6 @@
 
         <div class="members-grid" id="members-grid">
           <p class="text-muted text-sm">Loading&hellip;</p>
-        </div>
-
-        <div class="access-notice" id="join-cta">
-          <p>
-            <strong>Want to join this group?</strong>
-            All current members vote to approve new members.
-            <a href="profile.html">Sign in</a> to request membership.
-          </p>
         </div>
 
       </div>

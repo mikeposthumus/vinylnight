@@ -1,17 +1,14 @@
 var currentUser = null;
 
-/* ── Boot ─────────────────────────────────────────────────── */
+/* ── Boot ───────────────────────────────────────────────────── */
 (async function init() {
   try {
     var res = await fetch('/api/auth/me');
-    if (res.ok) {
-      var data = await res.json();
-      showProfile(data);
-    }
+    if (res.ok) showProfile(await res.json());
   } catch (e) { /* stay on auth panel */ }
 })();
 
-/* ── Auth panel toggling ─────────────────────────────────── */
+/* ── Auth panel toggles ──────────────────────────────────────── */
 document.getElementById('show-register').addEventListener('click', function(e) {
   e.preventDefault();
   document.getElementById('login-section').style.display = 'none';
@@ -24,18 +21,19 @@ document.getElementById('show-login').addEventListener('click', function(e) {
   document.getElementById('login-section').style.display = '';
 });
 
-/* ── Sign in ─────────────────────────────────────────────── */
+/* ── Sign in ─────────────────────────────────────────────────── */
 document.getElementById('signin-form').addEventListener('submit', async function(e) {
   e.preventDefault();
   var errEl = document.getElementById('login-error');
   errEl.style.display = 'none';
-  var email    = document.getElementById('email').value.trim();
-  var password = document.getElementById('password').value;
   try {
     var res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, password: password }),
+      body: JSON.stringify({
+        email:    document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value,
+      }),
     });
     var data = await res.json();
     if (!res.ok) { showError(errEl, data.error || 'Sign in failed.'); return; }
@@ -46,19 +44,20 @@ document.getElementById('signin-form').addEventListener('submit', async function
   }
 });
 
-/* ── Register ────────────────────────────────────────────── */
+/* ── Register ────────────────────────────────────────────────── */
 document.getElementById('register-form').addEventListener('submit', async function(e) {
   e.preventDefault();
   var errEl = document.getElementById('register-error');
   errEl.style.display = 'none';
-  var username = document.getElementById('reg-username').value.trim();
-  var email    = document.getElementById('reg-email').value.trim();
-  var password = document.getElementById('reg-password').value;
   try {
     var res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username, email: email, password: password }),
+      body: JSON.stringify({
+        username: document.getElementById('reg-username').value.trim(),
+        email:    document.getElementById('reg-email').value.trim(),
+        password: document.getElementById('reg-password').value,
+      }),
     });
     var data = await res.json();
     if (!res.ok) { showError(errEl, data.error || 'Registration failed.'); return; }
@@ -69,7 +68,7 @@ document.getElementById('register-form').addEventListener('submit', async functi
   }
 });
 
-/* ── Sign out ────────────────────────────────────────────── */
+/* ── Sign out ────────────────────────────────────────────────── */
 async function handleLogout() {
   await fetch('/api/auth/logout', { method: 'POST' });
   currentUser = null;
@@ -81,43 +80,59 @@ async function handleLogout() {
   document.getElementById('password').value = '';
 }
 
-/* ── Render profile ──────────────────────────────────────── */
+/* ── View / Edit toggle ──────────────────────────────────────── */
+document.getElementById('btn-edit').addEventListener('click', showEdit);
+
+function showView() {
+  document.getElementById('profile-view').style.display = '';
+  document.getElementById('profile-edit').style.display = 'none';
+}
+
+function showEdit() {
+  document.getElementById('profile-view').style.display = 'none';
+  document.getElementById('profile-edit').style.display = '';
+}
+
+/* ── Render profile ──────────────────────────────────────────── */
 function showProfile(data) {
   currentUser = data.user;
   document.getElementById('auth-panel').style.display = 'none';
   document.getElementById('profile-panel').style.display = '';
+  showView();
 
   var u = data.user;
-  var initial = (u.username || '?')[0].toUpperCase();
-  document.getElementById('view-avatar').textContent = initial;
   document.getElementById('view-username').textContent = u.username || '';
-  document.getElementById('view-bio').textContent = u.bio || '';
+  document.getElementById('view-location').textContent = u.location || '';
+  document.getElementById('view-bio').textContent      = u.bio || '';
+  document.getElementById('view-avatar').textContent   = (u.username || '?')[0].toUpperCase();
 
   /* Groups */
-  var groups = data.groups || [];
   var groupsEl = document.getElementById('view-groups');
+  var groups = data.groups || [];
   if (groups.length) {
     groupsEl.innerHTML = groups.map(function(g) {
       return '<div class="profile-group-item">' +
-        '<div class="avatar" style="width:28px;height:28px;font-size:0.7rem;border-radius:50%;">' +
+        '<div class="avatar" style="width:28px;height:28px;font-size:0.7rem;">' +
           esc((g.name || '?')[0].toUpperCase()) +
         '</div>' +
-        '<a href="group.html?group=' + esc(g.slug) + '" class="text-sm" style="color:var(--text-muted);">' +
-          esc(g.name) + '</a>' +
+        '<a href="group.html?group=' + esc(g.slug) + '" style="color:var(--text-muted); font-size:0.88rem;">' +
+          esc(g.name) +
+        '</a>' +
       '</div>';
-    }).join('') + '<a href="groups.html" class="text-xs text-muted mt-2" style="display:block;">+ Find more groups</a>';
+    }).join('');
   } else {
-    groupsEl.innerHTML = '<p class="text-xs text-muted">No groups yet. <a href="groups.html">Browse groups</a></p>';
+    groupsEl.innerHTML = '<p class="text-xs text-muted">No groups yet.</p>';
   }
 
   /* Top albums */
   var albums = data.topAlbums || [];
   var albumsEl = document.getElementById('view-albums');
-  var nums = ['01', '02', '03'];
-  albumsEl.innerHTML = nums.map(function(n, i) {
+  albumsEl.innerHTML = ['01','02','03'].map(function(n, i) {
     var a = albums[i];
     return '<div class="album-sleeve">' +
-      '<div class="album-sleeve-image"><div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div></div>' +
+      '<div class="album-sleeve-image">' +
+        '<div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>' +
+      '</div>' +
       '<div class="album-sleeve-footer">' +
         '<p class="album-sleeve-number">' + n + '</p>' +
         '<p class="album-sleeve-label">' + esc(a ? a.artist : '—') + '</p>' +
@@ -127,24 +142,73 @@ function showProfile(data) {
   }).join('');
 
   prefillEditForm(data);
+  loadInvitations();
 }
 
-/* ── Pre-fill edit form ──────────────────────────────────── */
+/* ── Invitations ─────────────────────────────────────────────── */
+async function loadInvitations() {
+  try {
+    var res = await fetch('/api/me/invitations');
+    if (!res.ok) return;
+    var data = await res.json();
+    renderInvitations(data.invitations || []);
+  } catch (e) { /* silent */ }
+}
+
+function renderInvitations(invitations) {
+  var section = document.getElementById('invitations-section');
+  var list    = document.getElementById('invitations-list');
+  if (!invitations.length) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  list.innerHTML = invitations.map(function(inv) {
+    return '<div class="access-notice" style="margin-bottom:0.75rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">' +
+      '<p style="margin:0;"><strong>' + esc(inv.group_name) + '</strong>' +
+        ' &mdash; invited by ' + esc(inv.invited_by) + '</p>' +
+      '<div style="display:flex;gap:0.5rem;flex-shrink:0;">' +
+        '<button class="btn btn-primary" style="padding:0.35rem 1rem; font-size:0.72rem;" ' +
+          'onclick="acceptInvitation(\'' + esc(inv.id) + '\')">Accept</button>' +
+        '<button class="btn btn-ghost" style="font-size:0.72rem;" ' +
+          'onclick="declineInvitation(\'' + esc(inv.id) + '\')">Decline</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function acceptInvitation(id) {
+  var res = await fetch('/api/invitations/' + id + '/accept', { method: 'POST' });
+  if (res.ok) {
+    var me = await fetch('/api/auth/me');
+    showProfile(await me.json());
+  } else {
+    var err = await res.json();
+    alert(err.error || 'Could not accept invitation.');
+  }
+}
+
+async function declineInvitation(id) {
+  var res = await fetch('/api/invitations/' + id + '/decline', { method: 'POST' });
+  if (res.ok) loadInvitations();
+  else {
+    var err = await res.json();
+    alert(err.error || 'Could not decline invitation.');
+  }
+}
+
+/* ── Pre-fill edit form ──────────────────────────────────────── */
 function prefillEditForm(data) {
   var u = data.user;
-  document.getElementById('edit-username').value = u.username || '';
-  document.getElementById('edit-location').value = u.location || '';
-  document.getElementById('edit-bio').value      = u.bio || '';
-
+  document.getElementById('edit-username').value = u.username  || '';
+  document.getElementById('edit-location').value = u.location  || '';
+  document.getElementById('edit-bio').value      = u.bio       || '';
   var albums = data.topAlbums || [];
   for (var i = 1; i <= 3; i++) {
     var a = albums[i - 1];
-    document.getElementById('album-' + i + '-artist').value = a ? a.artist : '';
+    document.getElementById('album-' + i + '-artist').value = a ? a.artist      : '';
     document.getElementById('album-' + i + '-title').value  = a ? a.album_title : '';
   }
 }
 
-/* ── Save profile ────────────────────────────────────────── */
+/* ── Save profile ────────────────────────────────────────────── */
 document.getElementById('edit-form').addEventListener('submit', async function(e) {
   e.preventDefault();
   var errEl   = document.getElementById('edit-error');
@@ -175,7 +239,6 @@ document.getElementById('edit-form').addEventListener('submit', async function(e
     if (!res.ok) { showError(errEl, data.error || 'Save failed.'); return; }
     var me = await fetch('/api/auth/me');
     showProfile(await me.json());
-    showTab('view');
   } catch (e) {
     showError(errEl, 'Could not connect. Try again.');
   } finally {
@@ -184,16 +247,7 @@ document.getElementById('edit-form').addEventListener('submit', async function(e
   }
 });
 
-/* ── Tab switching ───────────────────────────────────────── */
-function showTab(name) {
-  document.querySelectorAll('.profile-tab').forEach(function(btn) {
-    btn.classList.toggle('active', btn.textContent.toLowerCase().includes(name === 'view' ? 'view' : 'edit'));
-  });
-  document.getElementById('tab-view').classList.toggle('active', name === 'view');
-  document.getElementById('tab-edit').classList.toggle('active', name === 'edit');
-}
-
-/* ── Helpers ─────────────────────────────────────────────── */
+/* ── Helpers ─────────────────────────────────────────────────── */
 function showError(el, msg) {
   el.textContent = msg;
   el.style.display = '';

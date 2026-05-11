@@ -248,16 +248,21 @@ function checkMembership() {
   if (!groupData || !currentUser) return;
   var member = groupData.members.find(function(m) { return m.id === currentUser.id; });
   isMember = !!member;
+  var isFounder = member && member.role === 'founder';
 
   document.getElementById('state-guest').style.display = 'none';
   if (isMember) {
     document.getElementById('state-member').style.display = '';
-    document.getElementById('join-cta').style.display = 'none';
     var form = document.getElementById('add-album-form');
     if (form) form.style.display = '';
   } else {
     document.getElementById('state-nonmember').style.display = '';
   }
+
+  if (isFounder) {
+    document.getElementById('invite-section').style.display = '';
+  }
+
   document.getElementById('nav-auth-link').textContent = currentUser.username;
 }
 
@@ -318,14 +323,41 @@ async function addAlbum() {
   }
 }
 
-async function requestJoin() {
-  var res = await fetch('/api/groups/' + GROUP_SLUG + '/join', { method: 'POST' });
+/* ── Invite member (founders only) ─────────────────────────── */
+function toggleInviteForm() {
+  var form    = document.getElementById('invite-form');
+  var errEl   = document.getElementById('invite-error');
+  var success = document.getElementById('invite-success');
+  var isOpen  = form.style.display !== 'none';
+  form.style.display = isOpen ? 'none' : '';
+  if (!isOpen) {
+    document.getElementById('invite-username').value = '';
+    errEl.style.display = 'none';
+    success.style.display = 'none';
+  }
+}
+
+async function sendInvite() {
+  var username = (document.getElementById('invite-username').value || '').trim();
+  var errEl    = document.getElementById('invite-error');
+  var success  = document.getElementById('invite-success');
+  errEl.style.display = 'none';
+  success.style.display = 'none';
+  if (!username) { errEl.textContent = 'Enter a username.'; errEl.style.display = ''; return; }
+
+  var res = await fetch('/api/groups/' + GROUP_SLUG + '/invite', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: username }),
+  });
+  var data = await res.json();
   if (res.ok) {
-    document.getElementById('state-nonmember').innerHTML =
-      '<p>Join request sent. Members will vote to approve.</p>';
+    document.getElementById('invite-username').value = '';
+    success.textContent = 'Invitation sent to ' + data.invited + '.';
+    success.style.display = '';
   } else {
-    var err = await res.json();
-    alert(err.error || 'Could not send join request.');
+    errEl.textContent = data.error || 'Could not send invitation.';
+    errEl.style.display = '';
   }
 }
 

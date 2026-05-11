@@ -38,140 +38,135 @@
   <main>
     <div class="container">
 
-      <header class="page-header">
-        <p class="label mb-2">Account</p>
-        <h1>Profile</h1>
-      </header>
+      <!-- ── Not signed in ──────────────────────────────────────── -->
+      <div class="auth-panel" id="auth-panel">
 
-      <div class="page-content">
-
-        <!-- ── Auth state: Not signed in ──────────────────────────── -->
-        <div class="auth-panel" id="auth-panel">
-
-          <!-- Sign in -->
-          <div id="login-section">
-            <h2 style="margin-bottom: 0.5rem;">Sign in</h2>
-            <p class="text-muted text-sm mb-4">Sign in to track gatherings, log your albums, and manage your groups.</p>
-            <div id="login-error" class="form-hint" style="color: var(--accent-bright); display: none; margin-bottom: 1rem;"></div>
-            <form id="signin-form">
-              <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
-              </div>
-              <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
-              </div>
-              <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Sign In</button>
-            </form>
-            <div class="auth-divider">or</div>
-            <p class="text-sm text-muted" style="text-align: center;">
-              New here? <a href="#" id="show-register">Create an account</a>
-            </p>
-          </div>
-
-          <!-- Register -->
-          <div id="register-section" style="display: none;">
-            <h2 style="margin-bottom: 0.5rem;">Create an account</h2>
-            <p class="text-muted text-sm mb-4">Join Vinyl Night to track gatherings, log your albums, and connect with groups.</p>
-            <div id="register-error" class="form-hint" style="color: var(--accent-bright); display: none; margin-bottom: 1rem;"></div>
-            <form id="register-form">
-              <div class="form-group">
-                <label for="reg-username">Username</label>
-                <input type="text" id="reg-username" placeholder="your-username" maxlength="32" autocomplete="username">
-                <p class="form-hint">Letters, numbers, and hyphens only. Max 32 characters.</p>
-              </div>
-              <div class="form-group">
-                <label for="reg-email">Email</label>
-                <input type="email" id="reg-email" placeholder="you@example.com" autocomplete="email">
-              </div>
-              <div class="form-group">
-                <label for="reg-password">Password</label>
-                <input type="password" id="reg-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="new-password">
-              </div>
-              <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Create Account</button>
-            </form>
-            <div class="auth-divider">or</div>
-            <p class="text-sm text-muted" style="text-align: center;">
-              Already have an account? <a href="#" id="show-login">Sign in</a>
-            </p>
-          </div>
-
+        <div id="login-section">
+          <h2 style="margin-bottom: 0.5rem;">Sign in</h2>
+          <p class="text-muted text-sm mb-4">Sign in to track gatherings, log your albums, and manage your groups.</p>
+          <div id="login-error" class="form-hint" style="color: var(--accent-bright); display: none; margin-bottom: 1rem;"></div>
+          <form id="signin-form">
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+            </div>
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Sign In</button>
+          </form>
+          <div class="auth-divider">or</div>
+          <p class="text-sm text-muted" style="text-align: center;">
+            New here? <a href="#" id="show-register">Create an account</a>
+          </p>
         </div>
 
-        <!-- ── Signed-in state: Profile view + edit ───────────────── -->
-        <div id="profile-panel" style="display: none;">
-          <div class="profile-tabs">
-            <button class="profile-tab active" onclick="showTab('view')">View Profile</button>
-            <button class="profile-tab" onclick="showTab('edit')">Edit Profile</button>
-          </div>
+        <div id="register-section" style="display: none;">
+          <h2 style="margin-bottom: 0.5rem;">Create an account</h2>
+          <p class="text-muted text-sm mb-4">Join Vinyl Night to track gatherings, log your albums, and connect with groups.</p>
+          <div id="register-error" class="form-hint" style="color: var(--accent-bright); display: none; margin-bottom: 1rem;"></div>
+          <form id="register-form">
+            <div class="form-group">
+              <label for="reg-username">Username</label>
+              <input type="text" id="reg-username" placeholder="your-username" maxlength="32" autocomplete="username">
+              <p class="form-hint">Letters, numbers, and hyphens only. Max 32 characters.</p>
+            </div>
+            <div class="form-group">
+              <label for="reg-email">Email</label>
+              <input type="email" id="reg-email" placeholder="you@example.com" autocomplete="email">
+            </div>
+            <div class="form-group">
+              <label for="reg-password">Password</label>
+              <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Create Account</button>
+          </form>
+          <div class="auth-divider">or</div>
+          <p class="text-sm text-muted" style="text-align: center;">
+            Already have an account? <a href="#" id="show-login">Sign in</a>
+          </p>
+        </div>
 
-          <!-- VIEW TAB -->
-          <div class="tab-panel active" id="tab-view">
+      </div>
+
+      <!-- ── Signed in ──────────────────────────────────────────── -->
+      <div id="profile-panel" style="display: none;">
+
+        <!-- VIEW ─────────────────────────────────────────────── -->
+        <div id="profile-view">
+
+          <header class="page-header" style="display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <p class="label mb-2">Account</p>
+              <h1 id="view-username"></h1>
+              <p class="text-sm text-muted mt-1" id="view-location"></p>
+            </div>
+            <div style="display: flex; gap: 0.75rem; align-items: center; padding-bottom: 0.25rem;">
+              <button id="btn-edit" class="btn btn-outline">Edit Profile</button>
+              <button onclick="handleLogout()" class="btn btn-ghost">Sign Out</button>
+            </div>
+          </header>
+
+          <div class="page-content">
+
+            <!-- Pending invitations -->
+            <div id="invitations-section" style="display: none; margin-bottom: 2.5rem;">
+              <p class="label mb-3">Invitations</p>
+              <div id="invitations-list"></div>
+            </div>
+
             <div class="profile-layout">
 
               <!-- Sidebar -->
               <aside class="profile-sidebar">
                 <div class="avatar avatar-lg mb-3" id="view-avatar">?</div>
-                <p class="profile-name" id="view-username"></p>
                 <p class="profile-bio" id="view-bio"></p>
-                <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem; flex-wrap: wrap;">
-                  <a href="#" onclick="showTab('edit'); return false;" class="btn btn-outline" style="font-size: 0.75rem;">Edit Profile</a>
-                  <button onclick="handleLogout()" class="btn btn-ghost" style="font-size: 0.75rem;">Sign Out</button>
-                </div>
 
-                <hr class="groove" style="margin: 2rem 0;">
+                <hr class="groove" style="margin: 1.75rem 0;">
 
-                <p class="text-xs text-muted" style="letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1rem;">My Groups</p>
+                <p class="label mb-3">My Groups</p>
                 <div class="profile-groups-list" id="view-groups">
                   <p class="text-xs text-muted">No groups yet.</p>
                 </div>
               </aside>
 
-              <!-- Main: Favorite Albums -->
+              <!-- Main -->
               <div>
-                <p class="text-xs text-muted mb-3" style="letter-spacing: 0.12em; text-transform: uppercase;">3 Current Favorites</p>
+                <p class="label mb-3">3 Current Favorites</p>
                 <div class="albums-grid" id="view-albums"></div>
-
-                <hr class="groove">
-
-                <!-- Group activity -->
-                <p class="text-xs text-muted mb-3" style="letter-spacing: 0.12em; text-transform: uppercase;">Recent Gatherings Attended</p>
-
-                <div style="display: flex; flex-direction: column; gap: 0;">
-                  <div style="display: grid; grid-template-columns: 5rem 1fr; gap: 1.5rem; padding: 1.25rem 0; border-bottom: 1px solid var(--border-subtle);">
-                    <span class="text-xs text-muted" style="font-family: 'Playfair Display', serif; padding-top: 0.2rem;">Month 00</span>
-                    <div>
-                      <p class="text-sm" style="color: var(--text);">Placeholder Group &mdash; Gathering #00</p>
-                      <p class="text-xs text-muted mt-1">Artist &mdash; <em>Album Title</em></p>
-                    </div>
-                  </div>
-                  <div style="display: grid; grid-template-columns: 5rem 1fr; gap: 1.5rem; padding: 1.25rem 0; border-bottom: 1px solid var(--border-subtle);">
-                    <span class="text-xs text-muted" style="font-family: 'Playfair Display', serif; padding-top: 0.2rem;">Month 00</span>
-                    <div>
-                      <p class="text-sm" style="color: var(--text);">Placeholder Group &mdash; Gathering #00</p>
-                      <p class="text-xs text-muted mt-1">Artist &mdash; <em>Album Title</em></p>
-                    </div>
-                  </div>
-                </div>
-
               </div>
+
             </div>
           </div>
+        </div>
 
-          <!-- EDIT TAB -->
-          <div class="tab-panel" id="tab-edit">
+        <!-- EDIT ─────────────────────────────────────────────── -->
+        <div id="profile-edit" style="display: none;">
+
+          <header class="page-header" style="display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <p class="label mb-2">Account</p>
+              <h1>Edit Profile</h1>
+            </div>
+            <div style="padding-bottom: 0.25rem;">
+              <button onclick="showView()" class="btn btn-ghost">&larr; Cancel</button>
+            </div>
+          </header>
+
+          <div class="page-content">
             <div style="max-width: 600px;">
 
+              <div id="edit-error" class="form-hint" style="color: var(--accent-bright); display: none; margin-bottom: 1.5rem;"></div>
+
               <form id="edit-form">
-                <!-- Username -->
+
                 <div class="form-group">
                   <label for="edit-username">Username</label>
                   <input type="text" id="edit-username" placeholder="your-username" maxlength="32" autocomplete="username">
                   <p class="form-hint">Letters, numbers, and hyphens only. Max 32 characters.</p>
                 </div>
 
-                <!-- Location -->
                 <div class="form-group">
                   <label for="edit-location">Location</label>
                   <input type="text" id="edit-location" placeholder="City, State">
@@ -179,73 +174,47 @@
 
                 <hr class="groove" style="margin: 2rem 0;">
 
-                <!-- Bio -->
                 <div class="form-group">
                   <label for="edit-bio">Short Description</label>
-                  <textarea id="edit-bio" placeholder="A few sentences about yourself and your relationship to music&hellip;" maxlength="300"></textarea>
+                  <textarea id="edit-bio" placeholder="A few sentences about yourself and your relationship to music…" maxlength="300"></textarea>
                   <p class="form-hint">Max 300 characters.</p>
                 </div>
 
                 <hr class="groove" style="margin: 2rem 0;">
 
-                <!-- 3 Current Favorite Albums -->
-                <p class="text-xs text-muted mb-3" style="letter-spacing: 0.12em; text-transform: uppercase;">3 Current Favorite Albums</p>
+                <p class="label mb-2">3 Current Favorite Albums</p>
                 <p class="form-hint mb-4">These can change. Pick what's on heavy rotation right now.</p>
 
                 <div id="favorite-albums">
-
                   <div class="form-group album-row-form">
                     <span class="text-xs text-muted" style="padding-bottom: 0.85rem; font-family: 'Playfair Display', serif;">01</span>
-                    <div>
-                      <label for="album-1-artist">Artist</label>
-                      <input type="text" id="album-1-artist" placeholder="Artist name">
-                    </div>
-                    <div>
-                      <label for="album-1-title">Album</label>
-                      <input type="text" id="album-1-title" placeholder="Album title">
-                    </div>
+                    <div><label for="album-1-artist">Artist</label><input type="text" id="album-1-artist" placeholder="Artist name"></div>
+                    <div><label for="album-1-title">Album</label><input type="text" id="album-1-title" placeholder="Album title"></div>
                   </div>
-
                   <div class="form-group album-row-form">
                     <span class="text-xs text-muted" style="padding-bottom: 0.85rem; font-family: 'Playfair Display', serif;">02</span>
-                    <div>
-                      <label for="album-2-artist">Artist</label>
-                      <input type="text" id="album-2-artist" placeholder="Artist name">
-                    </div>
-                    <div>
-                      <label for="album-2-title">Album</label>
-                      <input type="text" id="album-2-title" placeholder="Album title">
-                    </div>
+                    <div><label for="album-2-artist">Artist</label><input type="text" id="album-2-artist" placeholder="Artist name"></div>
+                    <div><label for="album-2-title">Album</label><input type="text" id="album-2-title" placeholder="Album title"></div>
                   </div>
-
                   <div class="form-group album-row-form">
                     <span class="text-xs text-muted" style="padding-bottom: 0.85rem; font-family: 'Playfair Display', serif;">03</span>
-                    <div>
-                      <label for="album-3-artist">Artist</label>
-                      <input type="text" id="album-3-artist" placeholder="Artist name">
-                    </div>
-                    <div>
-                      <label for="album-3-title">Album</label>
-                      <input type="text" id="album-3-title" placeholder="Album title">
-                    </div>
+                    <div><label for="album-3-artist">Artist</label><input type="text" id="album-3-artist" placeholder="Artist name"></div>
+                    <div><label for="album-3-title">Album</label><input type="text" id="album-3-title" placeholder="Album title"></div>
                   </div>
-
                 </div>
 
                 <hr class="groove" style="margin: 2rem 0;">
 
-                <!-- Save -->
-                <div id="edit-error" class="form-hint" style="color: var(--accent-bright); display: none; margin-bottom: 1rem;"></div>
                 <div class="flex gap-2">
                   <button type="submit" class="btn btn-primary" id="save-btn">Save Changes</button>
-                  <button type="button" class="btn btn-ghost" onclick="showTab('view')">Cancel</button>
+                  <button type="button" class="btn btn-ghost" onclick="showView()">Cancel</button>
                 </div>
 
               </form>
             </div>
           </div>
-
         </div>
+
       </div>
     </div>
   </main>

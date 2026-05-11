@@ -44,7 +44,11 @@ async function route(request, url, env) {
   if (path === '/api/groups'        && method === 'GET')  return handleListGroups(request, env);
   if (path.match(/^\/api\/groups\/[^/]+$/) && method === 'GET') return handleGetGroup(request, env, path);
   if (path.match(/^\/api\/groups\/[^/]+\/current-episode$/) && method === 'GET') return handleCurrentEpisode(request, env, path);
-  if (path.match(/^\/api\/groups\/[^/]+\/join$/) && method === 'POST') return handleJoinRequest(request, env, path);
+  if (path.match(/^\/api\/groups\/[^/]+\/invite$/) && method === 'POST') return handleInvite(request, env, path);
+
+  if (path === '/api/me/invitations'                              && method === 'GET')  return handleMyInvitations(request, env);
+  if (path.match(/^\/api\/invitations\/[^/]+\/accept$/)          && method === 'POST') return handleAcceptInvitation(request, env, path);
+  if (path.match(/^\/api\/invitations\/[^/]+\/decline$/)         && method === 'POST') return handleDeclineInvitation(request, env, path);
 
   if (path.match(/^\/api\/seasons\/[^/]+\/episodes$/) && method === 'GET') return handleSeasonEpisodes(request, env, path);
 
@@ -92,7 +96,9 @@ async function handleLogin(request, env) {
     'SELECT id, username, email, password_hash FROM users WHERE email = ?'
   ).bind(email.toLowerCase()).first();
 
-  if (!user || !(await verifyPassword(password, user.password_hash))) {
+  let passwordOk = false;
+  try { passwordOk = await verifyPassword(password, user.password_hash); } catch {}
+  if (!user || !passwordOk) {
     return json({ error: 'Invalid email or password' }, 401);
   }
 
@@ -330,7 +336,7 @@ async function handleAddVinyl(request, env, path) {
   return json({ id, artist, album_title, contributor_username: user.username }, 201);
 }
 
-async function handleJoinRequest(request, env, path) {
+async function handleInvite(request, env, path) {
   const user = await requireAuth(request, env);
   if (!user) return json({ error: 'Unauthorized' }, 401);
 
@@ -338,17 +344,94 @@ async function handleJoinRequest(request, env, path) {
   const group = await env.DB.prepare('SELECT id FROM groups WHERE slug = ?').bind(slug).first();
   if (!group) return json({ error: 'Group not found' }, 404);
 
-  const existing = await env.DB.prepare(
-    'SELECT id, status FROM group_members WHERE group_id = ? AND user_id = ?'
+  const membership = await env.DB.prepare(
+    "SELECT role FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"
   ).bind(group.id, user.id).first();
-  if (existing) return json({ error: 'Already a member or request pending' }, 409);
+  if (!membership || membership.role !== 'founder') {
+    return json({ error: 'Only founders can invite members' }, 403);
+  }
 
-  const id = crypto.randomUUID();
+  const body = await parseBody(request);
+  const { username } = body ?? {};
+  if (!username) return json({ error: 'username is required' }, 400);
+
+  const invitee = await env.DB.prepare(
+    'SELECT id, username FROM users WHERE username = ?'
+  ).bind(username).first();
+  if (!invitee) return json({ error: 'User not found' }, 404);
+  if (invitee.id === user.id) return json({ error: 'You cannot invite yourself' }, 400);
+
+  const alreadyMember = await env.DB.prepare(
+    "SELECT id FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"
+  ).bind(group.id, invitee.id).first();
+  if (alreadyMember) return json({ error: 'User is already a member' }, 409);
+
+  const alreadyInvited = await env.DB.prepare(
+    "SELECT id FROM group_invitations WHERE group_id = ? AND invited_user_id = ? AND status = 'pending'"
+  ).bind(group.id, invitee.id).first();
+  if (alreadyInvited) return json({ error: 'Invitation already pending for this user' }, 409);
+
   await env.DB.prepare(
-    "INSERT INTO group_members (id, group_id, user_id, role, status) VALUES (?, ?, ?, 'member', 'pending')"
-  ).bind(id, group.id, user.id).run();
+    'INSERT INTO group_invitations (id, group_id, invited_user_id, invited_by, status) VALUES (?, ?, ?, ?, ?)'
+  ).bind(crypto.randomUUID(), group.id, invitee.id, user.id, 'pending').run();
 
-  return json({ ok: true }, 201);
+  return json({ ok: true, invited: invitee.username }, 201);
+}
+
+async function handleMyInvitations(request, env) {
+  const user = await requireAuth(request, env);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  const invitations = await env.DB.prepare(`
+    SELECT gi.id, gi.created_at,
+           g.name AS group_name, g.slug AS group_slug,
+           u.username AS invited_by
+    FROM group_invitations gi
+    JOIN groups g ON g.id = gi.group_id
+    JOIN users u ON u.id = gi.invited_by
+    WHERE gi.invited_user_id = ? AND gi.status = 'pending'
+    ORDER BY gi.created_at DESC
+  `).bind(user.id).all();
+
+  return json({ invitations: invitations.results });
+}
+
+async function handleAcceptInvitation(request, env, path) {
+  const user = await requireAuth(request, env);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  const id = path.split('/')[3];
+  const invitation = await env.DB.prepare(
+    "SELECT * FROM group_invitations WHERE id = ? AND invited_user_id = ? AND status = 'pending'"
+  ).bind(id, user.id).first();
+  if (!invitation) return json({ error: 'Invitation not found' }, 404);
+
+  await env.DB.prepare(
+    "INSERT INTO group_members (id, group_id, user_id, role, status) VALUES (?, ?, ?, 'member', 'active')"
+  ).bind(crypto.randomUUID(), invitation.group_id, user.id).run();
+
+  await env.DB.prepare(
+    "UPDATE group_invitations SET status = 'accepted' WHERE id = ?"
+  ).bind(id).run();
+
+  return json({ ok: true });
+}
+
+async function handleDeclineInvitation(request, env, path) {
+  const user = await requireAuth(request, env);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  const id = path.split('/')[3];
+  const invitation = await env.DB.prepare(
+    "SELECT id FROM group_invitations WHERE id = ? AND invited_user_id = ? AND status = 'pending'"
+  ).bind(id, user.id).first();
+  if (!invitation) return json({ error: 'Invitation not found' }, 404);
+
+  await env.DB.prepare(
+    "UPDATE group_invitations SET status = 'declined' WHERE id = ?"
+  ).bind(id).run();
+
+  return json({ ok: true });
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────
