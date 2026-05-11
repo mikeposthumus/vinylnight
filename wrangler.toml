@@ -1,15 +1,15 @@
 name = "vinylnight"
 compatibility_date = "2025-01-01"
+main = "src/index.js"
 
 [assets]
 directory = "./public"
+binding = "ASSETS"
 
-# Cloudflare D1 database (user login, groups, gatherings)
-# Uncomment when ready to provision:
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "vinylnight-db"
-# database_id = "placeholder-replace-with-actual-id"
+[[d1_databases]]
+binding = "DB"
+database_name = "vinylnight-db"
+database_id = "5ea0f19b-dd09-494b-a601-0109953b55ce"
 
 # Cloudflare R2 bucket (avatar image storage)
 # Uncomment when ready to provision:

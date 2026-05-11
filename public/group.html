@@ -201,16 +201,27 @@
       .episode-album-grid {
         grid-template-columns: 1fr;
       }
+    }
 
-      /* Archive episode rows: stack album tags vertically */
-      .episode-albums-inline {
-        flex-direction: column;
-        gap: 0.3rem;
-      }
+    /* ── Archive episode cards ───────────────────────── */
 
-      .episode-albums-inline .tag {
-        display: block;
-      }
+    .archive-episode {
+      padding: 1.5rem 0;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .archive-episode-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .archive-episode-meta {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      margin-bottom: 1rem;
     }
   </style>
 </head>
@@ -322,32 +333,38 @@
           <!-- Album grid for this episode — fixed 3 columns, one per record -->
           <div class="episode-album-grid">
 
-            <div class="album-sleeve" style="aspect-ratio: 1;" data-artist="Joni Mitchell" data-album="Blue">
-              <div class="album-sleeve-placeholder" aria-hidden="true">
-                <div class="album-sleeve-placeholder-disc"></div>
+            <div class="album-sleeve" data-artist="Joni Mitchell" data-album="Blue">
+              <div class="album-sleeve-image">
+                <div class="album-sleeve-placeholder" aria-hidden="true">
+                  <div class="album-sleeve-placeholder-disc"></div>
+                </div>
               </div>
-              <div class="album-sleeve-meta">
+              <div class="album-sleeve-footer">
                 <p class="album-sleeve-label">Joni Mitchell</p>
                 <p class="album-sleeve-title"><em>Blue</em></p>
+                <p class="album-sleeve-contributor">Added by Ben</p>
               </div>
-              <span class="album-sleeve-number" style="color: var(--text-muted); font-size: 0.65rem;">Added by Ben</span>
             </div>
 
-            <div class="album-sleeve" style="aspect-ratio: 1;" data-artist="Bruce Springsteen" data-album="Nebraska">
-              <div class="album-sleeve-placeholder" aria-hidden="true">
-                <div class="album-sleeve-placeholder-disc"></div>
+            <div class="album-sleeve" data-artist="Bruce Springsteen" data-album="Nebraska">
+              <div class="album-sleeve-image">
+                <div class="album-sleeve-placeholder" aria-hidden="true">
+                  <div class="album-sleeve-placeholder-disc"></div>
+                </div>
               </div>
-              <div class="album-sleeve-meta">
+              <div class="album-sleeve-footer">
                 <p class="album-sleeve-label">Bruce Springsteen</p>
                 <p class="album-sleeve-title"><em>Nebraska</em></p>
+                <p class="album-sleeve-contributor">Added by Kevin</p>
               </div>
-              <span class="album-sleeve-number" style="color: var(--text-muted); font-size: 0.65rem;">Added by Kevin</span>
             </div>
 
             <!-- Third slot — empty until a member adds their pick -->
-            <div class="album-sleeve" style="aspect-ratio: 1; border-style: dashed; opacity: 0.35; cursor: default;">
-              <div class="album-sleeve-placeholder" aria-hidden="true">
-                <div class="album-sleeve-placeholder-disc"></div>
+            <div class="album-sleeve" style="border-style: dashed; opacity: 0.35; cursor: default;">
+              <div class="album-sleeve-image">
+                <div class="album-sleeve-placeholder" aria-hidden="true">
+                  <div class="album-sleeve-placeholder-disc"></div>
+                </div>
               </div>
             </div>
 
@@ -505,36 +522,64 @@
 
           <div class="episodes-list">
 
-            <a href="#" class="episode-row">
-              <div>
-                <p class="text-xs text-muted" style="letter-spacing: 0.08em; text-transform: uppercase;">S8 E02</p>
-                <p class="episode-date">June 2026</p>
-              </div>
-              <div>
-                <p class="text-sm" style="color: var(--text); margin-bottom: 0.4rem;">Chris</p>
-                <div class="episode-albums-inline">
-                  <span class="tag">Joni Mitchell &mdash; <em>Blue</em></span>
-                  <span class="tag">Bruce Springsteen &mdash; <em>Nebraska</em></span>
+            <div class="archive-episode">
+              <p class="archive-episode-label">S8 E02 &middot; June 2026</p>
+              <p class="archive-episode-meta">Hosted by Chris &middot; 5 attended</p>
+              <div class="episode-album-grid">
+                <div class="album-sleeve" data-artist="Joni Mitchell" data-album="Blue">
+                  <div class="album-sleeve-image">
+                    <div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>
+                  </div>
+                  <div class="album-sleeve-footer">
+                    <p class="album-sleeve-label">Joni Mitchell</p>
+                    <p class="album-sleeve-title"><em>Blue</em></p>
+                  </div>
+                </div>
+                <div class="album-sleeve" data-artist="Bruce Springsteen" data-album="Nebraska">
+                  <div class="album-sleeve-image">
+                    <div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>
+                  </div>
+                  <div class="album-sleeve-footer">
+                    <p class="album-sleeve-label">Bruce Springsteen</p>
+                    <p class="album-sleeve-title"><em>Nebraska</em></p>
+                  </div>
                 </div>
               </div>
-              <span class="episode-count">5 attended</span>
-            </a>
+            </div>
 
-            <a href="#" class="episode-row">
-              <div>
-                <p class="text-xs text-muted" style="letter-spacing: 0.08em; text-transform: uppercase;">S8 E01</p>
-                <p class="episode-date">May 2026</p>
-              </div>
-              <div>
-                <p class="text-sm" style="color: var(--text); margin-bottom: 0.4rem;">Seth</p>
-                <div class="episode-albums-inline">
-                  <span class="tag">Radiohead &mdash; <em>OK Computer</em></span>
-                  <span class="tag">Bob Dylan &mdash; <em>Blood on the Tracks</em></span>
-                  <span class="tag">Gillian Welch &mdash; <em>Time (The Revelator)</em></span>
+            <div class="archive-episode">
+              <p class="archive-episode-label">S8 E01 &middot; May 2026</p>
+              <p class="archive-episode-meta">Hosted by Seth &middot; 5 attended</p>
+              <div class="episode-album-grid">
+                <div class="album-sleeve" data-artist="Radiohead" data-album="OK Computer">
+                  <div class="album-sleeve-image">
+                    <div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>
+                  </div>
+                  <div class="album-sleeve-footer">
+                    <p class="album-sleeve-label">Radiohead</p>
+                    <p class="album-sleeve-title"><em>OK Computer</em></p>
+                  </div>
+                </div>
+                <div class="album-sleeve" data-artist="Bob Dylan" data-album="Blood on the Tracks">
+                  <div class="album-sleeve-image">
+                    <div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>
+                  </div>
+                  <div class="album-sleeve-footer">
+                    <p class="album-sleeve-label">Bob Dylan</p>
+                    <p class="album-sleeve-title"><em>Blood on the Tracks</em></p>
+                  </div>
+                </div>
+                <div class="album-sleeve" data-artist="Gillian Welch" data-album="Time (The Revelator)">
+                  <div class="album-sleeve-image">
+                    <div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>
+                  </div>
+                  <div class="album-sleeve-footer">
+                    <p class="album-sleeve-label">Gillian Welch</p>
+                    <p class="album-sleeve-title"><em>Time (The Revelator)</em></p>
+                  </div>
                 </div>
               </div>
-              <span class="episode-count">5 attended</span>
-            </a>
+            </div>
 
           </div>
         </details>
@@ -554,37 +599,73 @@
 
           <div class="episodes-list">
 
-            <a href="#" class="episode-row">
-              <div>
-                <p class="text-xs text-muted" style="letter-spacing: 0.08em; text-transform: uppercase;">S7 E12</p>
-                <p class="episode-date">April 2026</p>
-              </div>
-              <div>
-                <p class="text-sm" style="color: var(--text); margin-bottom: 0.4rem;">Mike</p>
-                <div class="episode-albums-inline">
-                  <span class="tag">Bob Dylan &mdash; <em>Blood on the Tracks</em></span>
-                  <span class="tag">Neil Young &mdash; <em>Harvest Moon</em></span>
-                  <span class="tag">Wilco &mdash; <em>Yankee Hotel Foxtrot</em></span>
+            <div class="archive-episode">
+              <p class="archive-episode-label">S7 E12 &middot; April 2026</p>
+              <p class="archive-episode-meta">Hosted by Mike &middot; 5 attended</p>
+              <div class="episode-album-grid">
+                <div class="album-sleeve" data-artist="Bob Dylan" data-album="Blood on the Tracks">
+                  <div class="album-sleeve-image">
+                    <div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>
+                  </div>
+                  <div class="album-sleeve-footer">
+                    <p class="album-sleeve-label">Bob Dylan</p>
+                    <p class="album-sleeve-title"><em>Blood on the Tracks</em></p>
+                  </div>
+                </div>
+                <div class="album-sleeve" data-artist="Neil Young" data-album="Harvest Moon">
+                  <div class="album-sleeve-image">
+                    <div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>
+                  </div>
+                  <div class="album-sleeve-footer">
+                    <p class="album-sleeve-label">Neil Young</p>
+                    <p class="album-sleeve-title"><em>Harvest Moon</em></p>
+                  </div>
+                </div>
+                <div class="album-sleeve" data-artist="Wilco" data-album="Yankee Hotel Foxtrot">
+                  <div class="album-sleeve-image">
+                    <div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>
+                  </div>
+                  <div class="album-sleeve-footer">
+                    <p class="album-sleeve-label">Wilco</p>
+                    <p class="album-sleeve-title"><em>Yankee Hotel Foxtrot</em></p>
+                  </div>
                 </div>
               </div>
-              <span class="episode-count">5 attended</span>
-            </a>
+            </div>
 
-            <a href="#" class="episode-row">
-              <div>
-                <p class="text-xs text-muted" style="letter-spacing: 0.08em; text-transform: uppercase;">S7 E11</p>
-                <p class="episode-date">March 2026</p>
-              </div>
-              <div>
-                <p class="text-sm" style="color: var(--text); margin-bottom: 0.4rem;">Kevin</p>
-                <div class="episode-albums-inline">
-                  <span class="tag">Tom Waits &mdash; <em>Rain Dogs</em></span>
-                  <span class="tag">The National &mdash; <em>Trouble Will Find Me</em></span>
-                  <span class="tag">LCD Soundsystem &mdash; <em>Sound of Silver</em></span>
+            <div class="archive-episode">
+              <p class="archive-episode-label">S7 E11 &middot; March 2026</p>
+              <p class="archive-episode-meta">Hosted by Kevin &middot; 4 attended</p>
+              <div class="episode-album-grid">
+                <div class="album-sleeve" data-artist="Tom Waits" data-album="Rain Dogs">
+                  <div class="album-sleeve-image">
+                    <div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>
+                  </div>
+                  <div class="album-sleeve-footer">
+                    <p class="album-sleeve-label">Tom Waits</p>
+                    <p class="album-sleeve-title"><em>Rain Dogs</em></p>
+                  </div>
+                </div>
+                <div class="album-sleeve" data-artist="The National" data-album="Trouble Will Find Me">
+                  <div class="album-sleeve-image">
+                    <div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>
+                  </div>
+                  <div class="album-sleeve-footer">
+                    <p class="album-sleeve-label">The National</p>
+                    <p class="album-sleeve-title"><em>Trouble Will Find Me</em></p>
+                  </div>
+                </div>
+                <div class="album-sleeve" data-artist="LCD Soundsystem" data-album="Sound of Silver">
+                  <div class="album-sleeve-image">
+                    <div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>
+                  </div>
+                  <div class="album-sleeve-footer">
+                    <p class="album-sleeve-label">LCD Soundsystem</p>
+                    <p class="album-sleeve-title"><em>Sound of Silver</em></p>
+                  </div>
                 </div>
               </div>
-              <span class="episode-count">4 attended</span>
-            </a>
+            </div>
 
           </div>
         </details>

@@ -404,14 +404,10 @@ ul { list-style: none; }
 /* ── Album sleeve ───────────────────────────────────────────── */
 
 .album-sleeve {
-  aspect-ratio: 1;
   background: var(--surface-raised);
   border: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  padding: 0.875rem;
-  position: relative;
   overflow: hidden;
   transition: border-color 0.2s;
 }
@@ -420,14 +416,24 @@ ul { list-style: none; }
   border-color: var(--accent);
 }
 
-/* Subtle inner border — nods to the sleeve-within-sleeve */
-.album-sleeve::before {
+/* Square image area */
+.album-sleeve-image {
+  aspect-ratio: 1;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--surface-raised);
+}
+
+/* Subtle inner border on the image */
+.album-sleeve-image::before {
   content: '';
   position: absolute;
   inset: 6px;
   border: 1px solid var(--border-subtle);
   pointer-events: none;
   opacity: 0.5;
+  z-index: 3;
 }
 
 .album-sleeve-art {
@@ -436,46 +442,13 @@ ul { list-style: none; }
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.7;
+  opacity: 0.9;
   z-index: 1;
   transition: opacity 0.2s;
 }
 
 .album-sleeve:hover .album-sleeve-art {
-  opacity: 0.9;
-}
-
-.album-sleeve-meta {
-  position: relative;
-  z-index: 2;
-  background: linear-gradient(transparent, rgba(8, 14, 10, 0.92));
-  padding-top: 1.5rem;
-  margin: -0.875rem;
-  padding: 1.5rem 0.875rem 0;
-}
-
-.album-sleeve-label {
-  font-size: 0.68rem;
-  color: var(--text-muted);
-  letter-spacing: 0.08em;
-  margin-bottom: 0.2rem;
-}
-
-.album-sleeve-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 0.9rem;
-  color: var(--text);
-  line-height: 1.3;
-}
-
-.album-sleeve-number {
-  position: absolute;
-  top: 0.6rem;
-  right: 0.75rem;
-  font-size: 0.68rem;
-  color: var(--text-dim);
-  letter-spacing: 0.1em;
-  z-index: 2;
+  opacity: 1;
 }
 
 /* Album sleeve placeholder (no art yet) */
@@ -504,6 +477,50 @@ ul { list-style: none; }
   aspect-ratio: 1;
   border-radius: 50%;
   background: var(--border);
+}
+
+/* Footer below the image */
+.album-sleeve-footer {
+  padding: 0.5rem 0.6rem 0.55rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.album-sleeve-number {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  font-family: 'Playfair Display', serif;
+  margin-bottom: 0.1rem;
+}
+
+.album-sleeve-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.album-sleeve-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.album-sleeve-contributor {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
 }
 
 /* ── Forms ──────────────────────────────────────────────────── */
