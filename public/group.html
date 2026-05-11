@@ -320,7 +320,7 @@
         renderHero();
         renderMembers();
         renderArchive();
-        await loadCurrentEpisode();
+        await loadCurrentSeason();
       } catch (e) {
         document.getElementById('group-name').textContent = 'Could not load group';
       }
@@ -337,10 +337,17 @@
       } catch (e) { /* guest */ }
     }
 
-    async function loadCurrentEpisode() {
-      const res = await fetch('/api/groups/' + GROUP_SLUG + '/current-episode');
-      const data = await res.json();
-      renderNowPlaying(data);
+    async function loadCurrentSeason() {
+      var activeSeason = groupData.seasons.find(function(s) { return s.status === 'active'; })
+                      || groupData.seasons[0];
+      if (!activeSeason) {
+        document.getElementById('now-playing-content').innerHTML =
+          '<p class="text-muted text-sm">No active season yet.</p>';
+        return;
+      }
+      var res = await fetch('/api/seasons/' + activeSeason.id + '/episodes');
+      var data = await res.json();
+      renderNowPlaying(activeSeason, data.episodes || [], data.vinyls || []);
     }
 
     /* ── Hero ──────────────────────────────────────────────────── */
@@ -369,51 +376,75 @@
     }
 
     /* ── Now Playing ───────────────────────────────────────────── */
-    function renderNowPlaying(data) {
+    function renderNowPlaying(season, episodes, vinyls) {
       var el = document.getElementById('now-playing-content');
 
-      if (!data.episode) {
-        el.innerHTML = '<p class="text-muted text-sm">No active episode right now.</p>';
+      if (!episodes.length) {
+        el.innerHTML = '<p class="text-muted text-sm">No episodes yet this season.</p>';
         return;
       }
 
-      var ep = data.episode;
-      var vinyls = data.vinyls || [];
-      currentEpisodeId = ep.id;
+      var vinylsByEp = {};
+      vinyls.forEach(function(v) {
+        if (!vinylsByEp[v.episode_id]) vinylsByEp[v.episode_id] = [];
+        vinylsByEp[v.episode_id].push(v);
+      });
 
-      var albumsHtml = vinyls.map(function(v) {
-        return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url);
-      }).join('') + emptySleeveHtml();
+      var html = episodes.map(function(ep) {
+        var isCurrent = ep.status === 'current';
+        if (isCurrent) currentEpisodeId = ep.id;
 
-      var dateLabel = ep.date ? monthLabel(ep.date) : '';
-      el.innerHTML =
-        '<div class="current-episode">' +
-          '<div class="current-episode-header">' +
-            '<div>' +
-              '<p class="label mb-2">Season ' + ep.season_number + ' — Episode ' + ep.number + '</p>' +
-              '<h2 style="font-size:1.5rem;margin-bottom:0.35rem;">' + dateLabel + '</h2>' +
-              '<p class="text-sm text-muted">Hosted by <a href="profile.html">' + esc(ep.host_username || 'TBD') + '</a>' +
-              (data.attendeeCount ? ' &middot; ' + data.attendeeCount + ' attending' : '') + '</p>' +
-            '</div>' +
-            '<span class="tag tag-green">Current Episode</span>' +
-          '</div>' +
-          '<div class="episode-album-grid">' + albumsHtml + '</div>' +
-          '<div class="add-album-form" id="add-album-form" style="display:none;">' +
-            '<p class="add-album-form-title">Add your selection for this episode</p>' +
-            '<div class="add-album-row">' +
-              '<div><label for="add-artist">Artist</label><input type="text" id="add-artist" placeholder="Artist name" oninput="fetchAlbumArt()"></div>' +
-              '<div><label for="add-album-title">Album</label><input type="text" id="add-album-title" placeholder="Album title" oninput="fetchAlbumArt()"></div>' +
-              '<div style="display:flex;align-items:flex-end;gap:0.75rem;">' +
-                '<div class="art-preview" id="art-preview" title="Album art preview"><div class="art-preview-icon"></div></div>' +
-                '<button type="button" class="btn btn-primary" onclick="addAlbum()">Add</button>' +
+        var epVinyls = vinylsByEp[ep.id] || [];
+        var dateLabel = ep.date ? monthLabel(ep.date) : '';
+
+        var albumsHtml = epVinyls.map(function(v) {
+          return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url);
+        }).join('');
+        if (isCurrent) albumsHtml += emptySleeveHtml();
+
+        var badge = isCurrent
+          ? '<span class="tag tag-green">Current</span>'
+          : '<span class="tag">Completed</span>';
+
+        var addForm = isCurrent
+          ? '<div class="add-album-form" id="add-album-form" style="display:none;">' +
+              '<p class="add-album-form-title">Add your selection for this episode</p>' +
+              '<div class="add-album-row">' +
+                '<div><label for="add-artist">Artist</label><input type="text" id="add-artist" placeholder="Artist name" oninput="fetchAlbumArt()"></div>' +
+                '<div><label for="add-album-title">Album</label><input type="text" id="add-album-title" placeholder="Album title" oninput="fetchAlbumArt()"></div>' +
+                '<div style="display:flex;align-items:flex-end;gap:0.75rem;">' +
+                  '<div class="art-preview" id="art-preview" title="Album art preview"><div class="art-preview-icon"></div></div>' +
+                  '<button type="button" class="btn btn-primary" onclick="addAlbum()">Add</button>' +
+                '</div>' +
               '</div>' +
+              '<p class="form-hint mt-2">Album art is fetched automatically from the iTunes catalog as you type.</p>' +
+            '</div>'
+          : '';
+
+        return '<details class="season"' + (isCurrent ? ' open' : '') + '>' +
+          '<summary>' +
+            '<div>' +
+              '<span class="season-title">Episode ' + ep.number +
+                (dateLabel ? ' &mdash; ' + dateLabel : '') + '</span>' +
+              '<p class="text-xs text-muted mt-1">Hosted by ' + esc(ep.host_username || 'TBD') +
+                (ep.attendee_count ? ' &middot; ' + ep.attendee_count + ' attended' : '') + '</p>' +
             '</div>' +
-            '<p class="form-hint mt-2">Album art is fetched automatically from the iTunes catalog as you type.</p>' +
+            '<div style="display:flex;align-items:center;gap:1.5rem;">' +
+              badge +
+              '<span class="season-chevron">&#9656;</span>' +
+            '</div>' +
+          '</summary>' +
+          '<div style="padding-top:1.5rem;">' +
+            '<div class="episode-album-grid">' + albumsHtml + '</div>' +
+            addForm +
           '</div>' +
-        '</div>';
+        '</details>';
+      }).join('');
+
+      el.innerHTML = '<p class="label mb-4">Season ' + season.number + ' &mdash; ' + season.year + '</p>' + html;
 
       checkMembership();
-      loadAlbumArtForContainer(document.getElementById('now-playing-content'));
+      loadAlbumArtForContainer(el);
     }
 
     /* ── Members ───────────────────────────────────────────────── */
@@ -467,8 +498,8 @@
         '</details>';
       }).join('');
 
-      /* Auto-load the first (current) season */
-      if (seasons.length) loadSeasonEpisodes(seasons[0].id);
+      /* Load all seasons upfront */
+      seasons.forEach(function(s) { loadSeasonEpisodes(s.id); });
     }
 
     var loadedSeasons = {};
@@ -582,7 +613,7 @@
         document.getElementById('add-album-title').value = '';
         document.getElementById('art-preview').innerHTML = '<div class="art-preview-icon"></div>';
         delete document.getElementById('art-preview').dataset.artUrl;
-        await loadCurrentEpisode();
+        await loadCurrentSeason();
       } else {
         var err = await res.json();
         alert(err.error || 'Could not add album.');

@@ -195,9 +195,13 @@ async function handleUpdateProfile(request, env) {
 
 async function handleListGroups(request, env) {
   const groups = await env.DB.prepare(`
-    SELECT g.*, COUNT(gm.id) AS member_count
+    SELECT g.*,
+      COUNT(DISTINCT CASE WHEN gm.status = 'active' THEN gm.id END) AS member_count,
+      COUNT(DISTINCT e.id) AS episode_count
     FROM groups g
-    LEFT JOIN group_members gm ON gm.group_id = g.id AND gm.status = 'active'
+    LEFT JOIN group_members gm ON gm.group_id = g.id
+    LEFT JOIN seasons s ON s.group_id = g.id
+    LEFT JOIN episodes e ON e.season_id = s.id
     GROUP BY g.id
     ORDER BY g.created_at
   `).all();

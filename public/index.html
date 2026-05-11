@@ -93,53 +93,8 @@
           <a href="groups.html" class="btn btn-ghost">All groups &rarr;</a>
         </div>
 
-        <div class="card-grid">
-
-          <div class="card group-card">
-            <div>
-              <p class="group-card-name">The Original</p>
-              <p class="group-card-location">Grand Rapids, MI</p>
-            </div>
-            <p class="text-muted text-sm">The founding group. Eight years monthly, never a missed month. Season 8, Episode 1.</p>
-            <div class="group-card-footer">
-              <div class="meta-row">
-                <span class="meta-item"><strong>5</strong> members</span>
-                <span class="meta-item"><strong>90+</strong> gatherings</span>
-              </div>
-              <a href="group.html" class="btn btn-ghost text-xs">View &rarr;</a>
-            </div>
-          </div>
-
-          <div class="card group-card">
-            <div>
-              <p class="group-card-name">BK Listening Room</p>
-              <p class="group-card-location">Brooklyn, NY</p>
-            </div>
-            <p class="text-muted text-sm">A record shop side room turned monthly ritual. Eclectic taste, strong opinions.</p>
-            <div class="group-card-footer">
-              <div class="meta-row">
-                <span class="meta-item"><strong>4</strong> members</span>
-                <span class="meta-item"><strong>22</strong> gatherings</span>
-              </div>
-              <a href="group.html" class="btn btn-ghost text-xs">View &rarr;</a>
-            </div>
-          </div>
-
-          <div class="card group-card">
-            <div>
-              <p class="group-card-name">Saturday Side B</p>
-              <p class="group-card-location">Austin, TX</p>
-            </div>
-            <p class="text-muted text-sm">Three friends, a back porch, and a standing Saturday night commitment.</p>
-            <div class="group-card-footer">
-              <div class="meta-row">
-                <span class="meta-item"><strong>3</strong> members</span>
-                <span class="meta-item"><strong>9</strong> gatherings</span>
-              </div>
-              <a href="group.html" class="btn btn-ghost text-xs">View &rarr;</a>
-            </div>
-          </div>
-
+        <div class="card-grid" id="groups-grid">
+          <p class="text-muted text-sm">Loading&hellip;</p>
         </div>
       </div>
     </section>
@@ -174,5 +129,43 @@
   </footer>
 
   <script src="js/main.js"></script>
+  <script>
+    (async function loadGroups() {
+      var grid = document.getElementById('groups-grid');
+      try {
+        var res = await fetch('/api/groups');
+        var data = await res.json();
+        var groups = (data.groups || []).slice(0, 3);
+        if (!groups.length) {
+          grid.innerHTML = '<p class="text-muted text-sm">No groups yet.</p>';
+          return;
+        }
+        grid.innerHTML = groups.map(function(g) {
+          var gatherings = g.episode_count || 0;
+          var gatheringsLabel = gatherings ? '<strong>' + gatherings + '</strong> gatherings' : 'Just getting started';
+          return '<div class="card group-card">' +
+            '<div>' +
+              '<p class="group-card-name">' + esc(g.name) + '</p>' +
+              '<p class="group-card-location">' + esc(g.location || '') + '</p>' +
+            '</div>' +
+            '<p class="text-muted text-sm">' + esc(g.description || '') + '</p>' +
+            '<div class="group-card-footer">' +
+              '<div class="meta-row">' +
+                '<span class="meta-item"><strong>' + (g.member_count || 0) + '</strong> members</span>' +
+                '<span class="meta-item">' + gatheringsLabel + '</span>' +
+              '</div>' +
+              '<a href="group.html?group=' + esc(g.slug) + '" class="btn btn-ghost text-xs">View &rarr;</a>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      } catch (e) {
+        grid.innerHTML = '<p class="text-muted text-sm">Could not load groups.</p>';
+      }
+    })();
+
+    function esc(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+  </script>
 </body>
 </html>
