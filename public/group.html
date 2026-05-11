@@ -381,18 +381,9 @@
       var vinyls = data.vinyls || [];
       currentEpisodeId = ep.id;
 
-      var memberCount = groupData ? groupData.members.length : '?';
-      var albumSlots = Math.max(memberCount, vinyls.length);
-
-      var albumsHtml = '';
-      for (var i = 0; i < albumSlots; i++) {
-        var v = vinyls[i];
-        if (v) {
-          albumsHtml += albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url);
-        } else {
-          albumsHtml += emptySleeveHtml();
-        }
-      }
+      var albumsHtml = vinyls.map(function(v) {
+        return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url);
+      }).join('') + emptySleeveHtml();
 
       var dateLabel = ep.date ? monthLabel(ep.date) : '';
       el.innerHTML =
@@ -422,6 +413,7 @@
         '</div>';
 
       checkMembership();
+      loadAlbumArtForContainer(document.getElementById('now-playing-content'));
     }
 
     /* ── Members ───────────────────────────────────────────────── */
