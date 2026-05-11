@@ -55,9 +55,11 @@ function render(data) {
 
   /* Heavy rotation */
   var albums = data.topAlbums || [];
-  document.getElementById('user-albums').innerHTML = ['01','02','03'].map(function(n, i) {
+  var albumsEl = document.getElementById('user-albums');
+  albumsEl.innerHTML = ['01','02','03'].map(function(n, i) {
     var a = albums[i];
-    return '<div class="album-sleeve">' +
+    var attrs = a ? ' data-artist="' + esc(a.artist) + '" data-album="' + esc(a.album_title) + '"' : '';
+    return '<div class="album-sleeve"' + attrs + '>' +
       '<div class="album-sleeve-image">' +
         '<div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>' +
       '</div>' +
@@ -68,6 +70,7 @@ function render(data) {
       '</div>' +
     '</div>';
   }).join('');
+  loadArt(albumsEl);
 
   /* Recent contributions — first 9 come with the user object */
   var vinyls = data.recentVinyls || [];
@@ -110,8 +113,11 @@ function appendVinyls(vinyls) {
   var frag = document.createDocumentFragment();
   Array.from(tmp.children).forEach(function(el) { frag.appendChild(el); });
   grid.appendChild(frag);
+  loadArt(grid);
+}
 
-  grid.querySelectorAll('.album-sleeve[data-artist]').forEach(function(sleeve) {
+function loadArt(container) {
+  container.querySelectorAll('.album-sleeve[data-artist]').forEach(function(sleeve) {
     if (sleeve.querySelector('img') || sleeve.dataset.artLoading) return;
     sleeve.dataset.artLoading = '1';
     var artist = sleeve.dataset.artist;
