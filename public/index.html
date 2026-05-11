@@ -141,22 +141,27 @@
           return;
         }
         grid.innerHTML = groups.map(function(g) {
-          var gatherings = g.episode_count || 0;
-          var gatheringsLabel = gatherings ? '<strong>' + gatherings + '</strong> gatherings' : 'Just getting started';
-          return '<div class="card group-card">' +
-            '<div>' +
-              '<p class="group-card-name">' + esc(g.name) + '</p>' +
-              '<p class="group-card-location">' + esc(g.location || '') + '</p>' +
-            '</div>' +
-            '<p class="text-muted text-sm">' + esc(g.description || '') + '</p>' +
-            '<div class="group-card-footer">' +
-              '<div class="meta-row">' +
-                '<span class="meta-item"><strong>' + (g.member_count || 0) + '</strong> members</span>' +
-                '<span class="meta-item">' + gatheringsLabel + '</span>' +
+          var members  = g.member_count || 0;
+          var episodes = g.episode_count || 0;
+          var meta = members + ' member' + (members !== 1 ? 's' : '');
+          if (episodes) meta += ' &middot; ' + episodes + ' episode' + (episodes !== 1 ? 's' : '');
+          var estLabel = g.founded_year ? 'Est. ' + g.founded_year : '';
+          return '<a href="group.html?group=' + esc(g.slug) + '" class="group-cover-card">' +
+            '<div class="group-cover-art">' +
+              '<div class="group-cover-top">' +
+                '<div class="group-cover-disc" aria-hidden="true"></div>' +
+                '<span class="group-cover-est">' + esc(estLabel) + '</span>' +
               '</div>' +
-              '<a href="group.html?group=' + esc(g.slug) + '" class="btn btn-ghost text-xs">View &rarr;</a>' +
+              '<div class="group-cover-text">' +
+                '<p class="group-cover-location">' + esc(g.location || '') + '</p>' +
+                '<h3 class="group-cover-name">' + esc(g.name) + '</h3>' +
+              '</div>' +
             '</div>' +
-          '</div>';
+            '<div class="group-cover-footer">' +
+              '<span class="group-cover-meta">' + meta + '</span>' +
+              '<span class="group-cover-cta">View &rarr;</span>' +
+            '</div>' +
+          '</a>';
         }).join('');
       } catch (e) {
         grid.innerHTML = '<p class="text-muted text-sm">Could not load groups.</p>';
