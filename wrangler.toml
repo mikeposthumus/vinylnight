@@ -2,7 +2,7 @@ name = "vinylnight"
 compatibility_date = "2025-01-01"
 
 [assets]
-directory = "."
+directory = "./public"
 
 # Cloudflare D1 database (user login, groups, gatherings)
 # Uncomment when ready to provision:
