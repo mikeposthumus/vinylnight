@@ -124,7 +124,7 @@ function showProfile(data) {
     groupsEl.innerHTML = '<p class="text-xs text-muted">No groups yet.</p>';
   }
 
-  /* Top albums */
+  /* Heavy rotation (top 3) */
   var albums = data.topAlbums || [];
   var albumsEl = document.getElementById('view-albums');
   albumsEl.innerHTML = ['01','02','03'].map(function(n, i) {
@@ -140,6 +140,51 @@ function showProfile(data) {
       '</div>' +
     '</div>';
   }).join('');
+
+  /* Recent contributions */
+  var vinyls = data.recentVinyls || [];
+  var vinylsEl = document.getElementById('view-vinyls');
+  if (!vinyls.length) {
+    vinylsEl.innerHTML = '<p class="text-muted text-sm" style="grid-column:1/-1;">No contributions recorded yet.</p>';
+  } else {
+    vinylsEl.innerHTML = vinyls.map(function(v) {
+      var imgHtml = v.art_url
+        ? '<img src="' + esc(v.art_url) + '" alt="' + esc(v.artist) + '" style="width:100%;height:100%;object-fit:cover;display:block;">'
+        : '<div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>';
+      var meta = 'S' + v.season_number + ' E' + String(v.episode_number).padStart(2, '0');
+      return '<div class="album-sleeve" data-artist="' + esc(v.artist) + '" data-album="' + esc(v.album_title) + '">' +
+        '<div class="album-sleeve-image">' + imgHtml + '</div>' +
+        '<div class="album-sleeve-footer">' +
+          '<p class="album-sleeve-number">' + esc(meta) + '</p>' +
+          '<p class="album-sleeve-label">' + esc(v.artist) + '</p>' +
+          '<p class="album-sleeve-title"><em>' + esc(v.album_title) + '</em></p>' +
+          '<p class="album-sleeve-contributor">' +
+            '<a href="group.html?group=' + esc(v.group_slug) + '" style="color:var(--text-dim);">' +
+              esc(v.group_name) + '</a>' +
+          '</p>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    /* Lazy-load art for sleeves without stored art_url */
+    vinylsEl.querySelectorAll('.album-sleeve[data-artist]').forEach(function(sleeve) {
+      if (sleeve.querySelector('img')) return;
+      var artist = sleeve.dataset.artist;
+      var album  = sleeve.dataset.album;
+      fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + album) + '&media=music&entity=album&limit=1')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.results || !d.results.length) return;
+          var art = d.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+          var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
+          if (!placeholder) return;
+          var img = document.createElement('img');
+          img.src = art; img.alt = artist + ' — ' + album;
+          img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+          placeholder.replaceWith(img);
+        }).catch(function() {});
+    });
+  }
 
   prefillEditForm(data);
   loadInvitations();

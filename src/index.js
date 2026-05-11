@@ -124,16 +124,31 @@ async function handleMe(request, env) {
   const user = await requireAuth(request, env);
   if (!user) return json({ error: 'Unauthorized' }, 401);
 
-  const topAlbums = await env.DB.prepare(
-    'SELECT rank, artist, album_title FROM user_top_albums WHERE user_id = ? ORDER BY rank'
-  ).bind(user.id).all();
+  const [topAlbums, groups, recentVinyls] = await Promise.all([
+    env.DB.prepare(
+      'SELECT rank, artist, album_title FROM user_top_albums WHERE user_id = ? ORDER BY rank'
+    ).bind(user.id).all(),
 
-  const groups = await env.DB.prepare(`
-    SELECT g.id, g.name, g.slug, gm.role
-    FROM group_members gm
-    JOIN groups g ON g.id = gm.group_id
-    WHERE gm.user_id = ? AND gm.status = 'active'
-  `).bind(user.id).all();
+    env.DB.prepare(`
+      SELECT g.id, g.name, g.slug, gm.role
+      FROM group_members gm
+      JOIN groups g ON g.id = gm.group_id
+      WHERE gm.user_id = ? AND gm.status = 'active'
+    `).bind(user.id).all(),
+
+    env.DB.prepare(`
+      SELECT v.artist, v.album_title, v.art_url, v.added_at,
+             e.number AS episode_number, s.number AS season_number,
+             g.name AS group_name, g.slug AS group_slug
+      FROM episode_vinyls v
+      JOIN episodes e ON e.id = v.episode_id
+      JOIN seasons s ON s.id = e.season_id
+      JOIN groups g ON g.id = s.group_id
+      WHERE v.contributed_by = ?
+      ORDER BY v.added_at DESC
+      LIMIT 9
+    `).bind(user.id).all(),
+  ]);
 
   return json({
     user: {
@@ -144,8 +159,9 @@ async function handleMe(request, env) {
       location: user.location,
       bio: user.bio,
     },
-    topAlbums: topAlbums.results,
-    groups: groups.results,
+    topAlbums:    topAlbums.results,
+    groups:       groups.results,
+    recentVinyls: recentVinyls.results,
   });
 }
 

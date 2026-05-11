@@ -96,11 +96,15 @@
         <!-- VIEW ─────────────────────────────────────────────── -->
         <div id="profile-view">
 
+          <!-- Header: identity + actions -->
           <header class="page-header" style="display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-            <div>
-              <p class="label mb-2">Account</p>
-              <h1 id="view-username"></h1>
-              <p class="text-sm text-muted mt-1" id="view-location"></p>
+            <div style="display: flex; align-items: center; gap: 1.5rem;">
+              <div class="avatar avatar-lg" id="view-avatar">?</div>
+              <div>
+                <p class="label mb-1">Account</p>
+                <h1 id="view-username" style="margin-bottom: 0.2rem;"></h1>
+                <p class="text-sm text-muted" id="view-location"></p>
+              </div>
             </div>
             <div style="display: flex; gap: 0.75rem; align-items: center; padding-bottom: 0.25rem;">
               <button id="btn-edit" class="btn btn-outline">Edit Profile</button>
@@ -116,28 +120,29 @@
               <div id="invitations-list"></div>
             </div>
 
-            <div class="profile-layout">
-
-              <!-- Sidebar -->
-              <aside class="profile-sidebar">
-                <div class="avatar avatar-lg mb-3" id="view-avatar">?</div>
-                <p class="profile-bio" id="view-bio"></p>
-
-                <hr class="groove" style="margin: 1.75rem 0;">
-
+            <!-- Bio + Groups row -->
+            <div class="profile-bio-groups-row" style="display: grid; grid-template-columns: 1fr 240px; gap: 3rem; margin-bottom: 3rem;">
+              <p class="profile-bio" id="view-bio" style="margin: 0;"></p>
+              <div>
                 <p class="label mb-3">My Groups</p>
                 <div class="profile-groups-list" id="view-groups">
                   <p class="text-xs text-muted">No groups yet.</p>
                 </div>
-              </aside>
-
-              <!-- Main -->
-              <div>
-                <p class="label mb-3">3 Current Favorites</p>
-                <div class="albums-grid" id="view-albums"></div>
               </div>
-
             </div>
+
+            <hr class="groove">
+
+            <!-- 3 Current Favorites -->
+            <p class="label mb-3">Heavy Rotation</p>
+            <div class="albums-grid" id="view-albums" style="margin-bottom: 3rem;"></div>
+
+            <hr class="groove">
+
+            <!-- Recent Contributions -->
+            <p class="label mb-3">Recent Contributions</p>
+            <div class="albums-grid" id="view-vinyls" style="grid-template-columns: repeat(3, 1fr);"></div>
+
           </div>
         </div>
 
@@ -182,7 +187,7 @@
 
                 <hr class="groove" style="margin: 2rem 0;">
 
-                <p class="label mb-2">3 Current Favorite Albums</p>
+                <p class="label mb-2">3 Current Favorites</p>
                 <p class="form-hint mb-4">These can change. Pick what's on heavy rotation right now.</p>
 
                 <div id="favorite-albums">

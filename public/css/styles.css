@@ -1330,6 +1330,7 @@ textarea {
 
   .profile-layout { grid-template-columns: 1fr; }
   .profile-sidebar { position: static; }
+  .profile-bio-groups-row { grid-template-columns: 1fr !important; }
 
   .albums-grid { grid-template-columns: repeat(3, 1fr); }
 
