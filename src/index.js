@@ -43,6 +43,12 @@ async function route(request, url, env) {
 
   if (path === '/api/groups'        && method === 'GET')  return handleListGroups(request, env);
   if (path.match(/^\/api\/groups\/[^/]+$/) && method === 'GET') return handleGetGroup(request, env, path);
+  if (path.match(/^\/api\/groups\/[^/]+\/current-episode$/) && method === 'GET') return handleCurrentEpisode(request, env, path);
+  if (path.match(/^\/api\/groups\/[^/]+\/join$/) && method === 'POST') return handleJoinRequest(request, env, path);
+
+  if (path.match(/^\/api\/seasons\/[^/]+\/episodes$/) && method === 'GET') return handleSeasonEpisodes(request, env, path);
+
+  if (path.match(/^\/api\/episodes\/[^/]+\/vinyls$/) && method === 'POST') return handleAddVinyl(request, env, path);
 
   return json({ error: 'Not found' }, 404);
 }
@@ -230,6 +236,115 @@ async function handleGetGroup(request, env, path) {
     genres: genres.results.map(r => r.genre),
     seasons: seasons.results,
   });
+}
+
+// ── Episodes & Vinyls ─────────────────────────────────────────────────
+
+async function handleCurrentEpisode(request, env, path) {
+  const slug = path.split('/')[3];
+  const group = await env.DB.prepare('SELECT id FROM groups WHERE slug = ?').bind(slug).first();
+  if (!group) return json({ error: 'Group not found' }, 404);
+
+  const episode = await env.DB.prepare(`
+    SELECT e.*, s.number AS season_number, u.username AS host_username
+    FROM episodes e
+    JOIN seasons s ON s.id = e.season_id
+    LEFT JOIN users u ON u.id = e.host_id
+    WHERE s.group_id = ? AND e.status = 'current'
+    LIMIT 1
+  `).bind(group.id).first();
+
+  if (!episode) return json({ episode: null });
+
+  const vinyls = await env.DB.prepare(`
+    SELECT v.*, u.username AS contributor_username
+    FROM episode_vinyls v
+    JOIN users u ON u.id = v.contributed_by
+    WHERE v.episode_id = ?
+    ORDER BY v.added_at
+  `).bind(episode.id).all();
+
+  const attendeeCount = await env.DB.prepare(
+    'SELECT COUNT(*) AS count FROM episode_attendees WHERE episode_id = ?'
+  ).bind(episode.id).first();
+
+  return json({ episode, vinyls: vinyls.results, attendeeCount: attendeeCount.count });
+}
+
+async function handleSeasonEpisodes(request, env, path) {
+  const seasonId = path.split('/')[3];
+
+  const episodes = await env.DB.prepare(`
+    SELECT e.*, u.username AS host_username,
+      (SELECT COUNT(*) FROM episode_attendees WHERE episode_id = e.id) AS attendee_count
+    FROM episodes e
+    LEFT JOIN users u ON u.id = e.host_id
+    WHERE e.season_id = ?
+    ORDER BY e.number DESC
+  `).bind(seasonId).all();
+
+  const episodeIds = episodes.results.map(e => `'${e.id}'`).join(',');
+  let vinyls = [];
+  if (episodeIds.length) {
+    const result = await env.DB.prepare(`
+      SELECT v.*, u.username AS contributor_username
+      FROM episode_vinyls v
+      JOIN users u ON u.id = v.contributed_by
+      WHERE v.episode_id IN (${episodeIds})
+      ORDER BY v.episode_id, v.added_at
+    `).all();
+    vinyls = result.results;
+  }
+
+  return json({ episodes: episodes.results, vinyls });
+}
+
+async function handleAddVinyl(request, env, path) {
+  const user = await requireAuth(request, env);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  const episodeId = path.split('/')[3];
+  const episode = await env.DB.prepare(
+    "SELECT id FROM episodes WHERE id = ? AND status IN ('current', 'upcoming')"
+  ).bind(episodeId).first();
+  if (!episode) return json({ error: 'Episode not found or not open' }, 404);
+
+  const body = await parseBody(request);
+  const { artist, album_title, art_url } = body ?? {};
+  if (!artist || !album_title) return json({ error: 'artist and album_title are required' }, 400);
+
+  const existing = await env.DB.prepare(
+    'SELECT id FROM episode_vinyls WHERE episode_id = ? AND contributed_by = ?'
+  ).bind(episodeId, user.id).first();
+  if (existing) return json({ error: 'You already added a vinyl for this episode' }, 409);
+
+  const id = crypto.randomUUID();
+  await env.DB.prepare(
+    'INSERT INTO episode_vinyls (id, episode_id, contributed_by, artist, album_title, art_url) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(id, episodeId, user.id, artist, album_title, art_url ?? null).run();
+
+  return json({ id, artist, album_title, contributor_username: user.username }, 201);
+}
+
+async function handleJoinRequest(request, env, path) {
+  const user = await requireAuth(request, env);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  const slug = path.split('/')[3];
+  const group = await env.DB.prepare('SELECT id FROM groups WHERE slug = ?').bind(slug).first();
+  if (!group) return json({ error: 'Group not found' }, 404);
+
+  const existing = await env.DB.prepare(
+    'SELECT id, status FROM group_members WHERE group_id = ? AND user_id = ?'
+  ).bind(group.id, user.id).first();
+  if (existing) return json({ error: 'Already a member or request pending' }, 409);
+
+  const id = crypto.randomUUID();
+  await env.DB.prepare(
+    "INSERT INTO group_members (id, group_id, user_id, role, status) VALUES (?, ?, ?, 'member', 'pending')"
+  ).bind(id, group.id, user.id).run();
+
+  return json({ ok: true }, 201);
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────
