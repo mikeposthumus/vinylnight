@@ -130,26 +130,56 @@
 
         <!-- ── Auth state: Not signed in ──────────────────────────── -->
         <div class="auth-panel" id="auth-panel">
-          <h2 style="margin-bottom: 0.5rem;">Sign in</h2>
-          <p class="text-muted text-sm mb-4">Sign in to track gatherings, log your albums, and manage your groups.</p>
 
-          <form id="signin-form">
-            <div class="form-group">
-              <label for="email">Email</label>
-              <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
-            </div>
-            <div class="form-group">
-              <label for="password">Password</label>
-              <input type="password" id="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
-            </div>
-            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Sign In</button>
-          </form>
+          <!-- Sign in -->
+          <div id="login-section">
+            <h2 style="margin-bottom: 0.5rem;">Sign in</h2>
+            <p class="text-muted text-sm mb-4">Sign in to track gatherings, log your albums, and manage your groups.</p>
+            <div id="login-error" class="form-hint" style="color: var(--accent-bright); display: none; margin-bottom: 1rem;"></div>
+            <form id="signin-form">
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+              </div>
+              <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Sign In</button>
+            </form>
+            <div class="auth-divider">or</div>
+            <p class="text-sm text-muted" style="text-align: center;">
+              New here? <a href="#" id="show-register">Create an account</a>
+            </p>
+          </div>
 
-          <div class="auth-divider">or</div>
+          <!-- Register -->
+          <div id="register-section" style="display: none;">
+            <h2 style="margin-bottom: 0.5rem;">Create an account</h2>
+            <p class="text-muted text-sm mb-4">Join Vinyl Night to track gatherings, log your albums, and connect with groups.</p>
+            <div id="register-error" class="form-hint" style="color: var(--accent-bright); display: none; margin-bottom: 1rem;"></div>
+            <form id="register-form">
+              <div class="form-group">
+                <label for="reg-username">Username</label>
+                <input type="text" id="reg-username" placeholder="your-username" maxlength="32" autocomplete="username">
+                <p class="form-hint">Letters, numbers, and hyphens only. Max 32 characters.</p>
+              </div>
+              <div class="form-group">
+                <label for="reg-email">Email</label>
+                <input type="email" id="reg-email" placeholder="you@example.com" autocomplete="email">
+              </div>
+              <div class="form-group">
+                <label for="reg-password">Password</label>
+                <input type="password" id="reg-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="new-password">
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Create Account</button>
+            </form>
+            <div class="auth-divider">or</div>
+            <p class="text-sm text-muted" style="text-align: center;">
+              Already have an account? <a href="#" id="show-login">Sign in</a>
+            </p>
+          </div>
 
-          <p class="text-sm text-muted" style="text-align: center;">
-            New here? <a href="#" onclick="signIn(); return false;">Create an account</a>
-          </p>
         </div>
 
         <!-- ── Signed-in state: Profile view + edit ───────────────── -->
@@ -165,73 +195,26 @@
 
               <!-- Sidebar -->
               <aside class="profile-sidebar">
-                <div class="avatar avatar-lg mb-3">P</div>
-                <p class="profile-name">Placeholder Username</p>
-                <p class="profile-bio">Placeholder — a short member bio or description. A couple of sentences about who they are and what they listen to.</p>
-                <a href="#" onclick="showTab('edit'); return false;" class="btn btn-outline" style="margin-top: 0.25rem; font-size: 0.75rem;">Edit Profile</a>
+                <div class="avatar avatar-lg mb-3" id="view-avatar">?</div>
+                <p class="profile-name" id="view-username"></p>
+                <p class="profile-bio" id="view-bio"></p>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem; flex-wrap: wrap;">
+                  <a href="#" onclick="showTab('edit'); return false;" class="btn btn-outline" style="font-size: 0.75rem;">Edit Profile</a>
+                  <button onclick="handleLogout()" class="btn btn-ghost" style="font-size: 0.75rem;">Sign Out</button>
+                </div>
 
                 <hr class="groove" style="margin: 2rem 0;">
 
                 <p class="text-xs text-muted" style="letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1rem;">My Groups</p>
-                <div class="profile-groups-list">
-                  <div class="profile-group-item">
-                    <div class="avatar" style="width: 28px; height: 28px; font-size: 0.7rem; border-radius: 50%;">&#9675;</div>
-                    <a href="groups.html" class="text-sm" style="color: var(--text-muted);">Placeholder Group</a>
-                  </div>
-                  <div class="profile-group-item">
-                    <div class="avatar" style="width: 28px; height: 28px; font-size: 0.7rem; border-radius: 50%;">&#9675;</div>
-                    <a href="groups.html" class="text-sm" style="color: var(--text-muted);">Placeholder Group</a>
-                  </div>
-                  <a href="groups.html" class="text-xs text-muted mt-2" style="display: block;">+ Find more groups</a>
+                <div class="profile-groups-list" id="view-groups">
+                  <p class="text-xs text-muted">No groups yet.</p>
                 </div>
               </aside>
 
               <!-- Main: Favorite Albums -->
               <div>
                 <p class="text-xs text-muted mb-3" style="letter-spacing: 0.12em; text-transform: uppercase;">3 Current Favorites</p>
-
-                <div class="albums-grid">
-
-                  <div class="album-sleeve">
-                    <div class="album-sleeve-image">
-                      <div class="album-sleeve-placeholder" aria-hidden="true">
-                        <div class="album-sleeve-placeholder-disc"></div>
-                      </div>
-                    </div>
-                    <div class="album-sleeve-footer">
-                      <p class="album-sleeve-number">01</p>
-                      <p class="album-sleeve-label">Artist Name</p>
-                      <p class="album-sleeve-title"><em>Album Title</em></p>
-                    </div>
-                  </div>
-
-                  <div class="album-sleeve">
-                    <div class="album-sleeve-image">
-                      <div class="album-sleeve-placeholder" aria-hidden="true">
-                        <div class="album-sleeve-placeholder-disc"></div>
-                      </div>
-                    </div>
-                    <div class="album-sleeve-footer">
-                      <p class="album-sleeve-number">02</p>
-                      <p class="album-sleeve-label">Artist Name</p>
-                      <p class="album-sleeve-title"><em>Album Title</em></p>
-                    </div>
-                  </div>
-
-                  <div class="album-sleeve">
-                    <div class="album-sleeve-image">
-                      <div class="album-sleeve-placeholder" aria-hidden="true">
-                        <div class="album-sleeve-placeholder-disc"></div>
-                      </div>
-                    </div>
-                    <div class="album-sleeve-footer">
-                      <p class="album-sleeve-number">03</p>
-                      <p class="album-sleeve-label">Artist Name</p>
-                      <p class="album-sleeve-title"><em>Album Title</em></p>
-                    </div>
-                  </div>
-
-                </div>
+                <div class="albums-grid" id="view-albums"></div>
 
                 <hr class="groove">
 
@@ -263,43 +246,26 @@
           <div class="tab-panel" id="tab-edit">
             <div style="max-width: 600px;">
 
-              <form>
-                <!-- Avatar -->
-                <div class="form-group">
-                  <label>Avatar</label>
-                  <div class="avatar-upload">
-                    <div class="avatar avatar-lg" id="avatar-preview">P</div>
-                    <div>
-                      <label for="avatar-input" class="avatar-upload-trigger" style="display: inline-block; margin-bottom: 0.5rem;">
-                        Choose image&hellip;
-                      </label>
-                      <input type="file" id="avatar-input" accept="image/*" class="sr-only">
-                      <p class="form-hint">JPG or PNG. Max 2MB.</p>
-                    </div>
-                  </div>
-                </div>
-
-                <hr class="groove" style="margin: 2rem 0;">
-
+              <form id="edit-form">
                 <!-- Username -->
                 <div class="form-group">
-                  <label for="username">Username</label>
-                  <input type="text" id="username" placeholder="your-username" maxlength="32" autocomplete="username">
+                  <label for="edit-username">Username</label>
+                  <input type="text" id="edit-username" placeholder="your-username" maxlength="32" autocomplete="username">
                   <p class="form-hint">Letters, numbers, and hyphens only. Max 32 characters.</p>
                 </div>
 
-                <!-- Email -->
+                <!-- Location -->
                 <div class="form-group">
-                  <label for="edit-email">Email</label>
-                  <input type="email" id="edit-email" placeholder="you@example.com" autocomplete="email">
+                  <label for="edit-location">Location</label>
+                  <input type="text" id="edit-location" placeholder="City, State">
                 </div>
 
                 <hr class="groove" style="margin: 2rem 0;">
 
                 <!-- Bio -->
                 <div class="form-group">
-                  <label for="bio">Short Description</label>
-                  <textarea id="bio" placeholder="A few sentences about yourself and your relationship to music&hellip;" maxlength="300"></textarea>
+                  <label for="edit-bio">Short Description</label>
+                  <textarea id="edit-bio" placeholder="A few sentences about yourself and your relationship to music&hellip;" maxlength="300"></textarea>
                   <p class="form-hint">Max 300 characters.</p>
                 </div>
 
@@ -352,8 +318,9 @@
                 <hr class="groove" style="margin: 2rem 0;">
 
                 <!-- Save -->
+                <div id="edit-error" class="form-hint" style="color: var(--accent-bright); display: none; margin-bottom: 1rem;"></div>
                 <div class="flex gap-2">
-                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                  <button type="submit" class="btn btn-primary" id="save-btn">Save Changes</button>
                   <button type="button" class="btn btn-ghost" onclick="showTab('view')">Cancel</button>
                 </div>
 
@@ -380,22 +347,209 @@
 
   <script src="js/main.js"></script>
   <script>
-    function signIn() {
-      document.getElementById('auth-panel').style.display = 'none';
-      document.getElementById('profile-panel').style.display = 'block';
-    }
+    var currentUser = null;
 
-    document.getElementById('signin-form').addEventListener('submit', function (e) {
+    /* ── Boot ─────────────────────────────────────────────────── */
+    (async function init() {
+      try {
+        var res = await fetch('/api/auth/me');
+        if (res.ok) {
+          var data = await res.json();
+          showProfile(data);
+        }
+      } catch (e) { /* stay on auth panel */ }
+    })();
+
+    /* ── Auth panel toggling ─────────────────────────────────── */
+    document.getElementById('show-register').addEventListener('click', function(e) {
       e.preventDefault();
-      signIn();
+      document.getElementById('login-section').style.display = 'none';
+      document.getElementById('register-section').style.display = '';
     });
 
+    document.getElementById('show-login').addEventListener('click', function(e) {
+      e.preventDefault();
+      document.getElementById('register-section').style.display = 'none';
+      document.getElementById('login-section').style.display = '';
+    });
+
+    /* ── Sign in ─────────────────────────────────────────────── */
+    document.getElementById('signin-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var errEl = document.getElementById('login-error');
+      errEl.style.display = 'none';
+      var email    = document.getElementById('email').value.trim();
+      var password = document.getElementById('password').value;
+      try {
+        var res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, password: password }),
+        });
+        var data = await res.json();
+        if (!res.ok) { showError(errEl, data.error || 'Sign in failed.'); return; }
+        var me = await fetch('/api/auth/me');
+        showProfile(await me.json());
+      } catch (e) {
+        showError(errEl, 'Could not connect. Try again.');
+      }
+    });
+
+    /* ── Register ────────────────────────────────────────────── */
+    document.getElementById('register-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var errEl = document.getElementById('register-error');
+      errEl.style.display = 'none';
+      var username = document.getElementById('reg-username').value.trim();
+      var email    = document.getElementById('reg-email').value.trim();
+      var password = document.getElementById('reg-password').value;
+      try {
+        var res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: username, email: email, password: password }),
+        });
+        var data = await res.json();
+        if (!res.ok) { showError(errEl, data.error || 'Registration failed.'); return; }
+        var me = await fetch('/api/auth/me');
+        showProfile(await me.json());
+      } catch (e) {
+        showError(errEl, 'Could not connect. Try again.');
+      }
+    });
+
+    /* ── Sign out ────────────────────────────────────────────── */
+    async function handleLogout() {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      currentUser = null;
+      document.getElementById('profile-panel').style.display = 'none';
+      document.getElementById('auth-panel').style.display = '';
+      document.getElementById('login-section').style.display = '';
+      document.getElementById('register-section').style.display = 'none';
+      document.getElementById('email').value = '';
+      document.getElementById('password').value = '';
+    }
+
+    /* ── Render profile ──────────────────────────────────────── */
+    function showProfile(data) {
+      currentUser = data.user;
+      document.getElementById('auth-panel').style.display = 'none';
+      document.getElementById('profile-panel').style.display = '';
+
+      var u = data.user;
+      var initial = (u.username || '?')[0].toUpperCase();
+      document.getElementById('view-avatar').textContent = initial;
+      document.getElementById('view-username').textContent = u.username || '';
+      document.getElementById('view-bio').textContent = u.bio || '';
+
+      /* Groups */
+      var groups = data.groups || [];
+      var groupsEl = document.getElementById('view-groups');
+      if (groups.length) {
+        groupsEl.innerHTML = groups.map(function(g) {
+          return '<div class="profile-group-item">' +
+            '<div class="avatar" style="width:28px;height:28px;font-size:0.7rem;border-radius:50%;">' +
+              esc((g.name || '?')[0].toUpperCase()) +
+            '</div>' +
+            '<a href="group.html?group=' + esc(g.slug) + '" class="text-sm" style="color:var(--text-muted);">' +
+              esc(g.name) + '</a>' +
+          '</div>';
+        }).join('') + '<a href="groups.html" class="text-xs text-muted mt-2" style="display:block;">+ Find more groups</a>';
+      } else {
+        groupsEl.innerHTML = '<p class="text-xs text-muted">No groups yet. <a href="groups.html">Browse groups</a></p>';
+      }
+
+      /* Top albums */
+      var albums = data.topAlbums || [];
+      var albumsEl = document.getElementById('view-albums');
+      var nums = ['01', '02', '03'];
+      albumsEl.innerHTML = nums.map(function(n, i) {
+        var a = albums[i];
+        return '<div class="album-sleeve">' +
+          '<div class="album-sleeve-image"><div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div></div>' +
+          '<div class="album-sleeve-footer">' +
+            '<p class="album-sleeve-number">' + n + '</p>' +
+            '<p class="album-sleeve-label">' + esc(a ? a.artist : '—') + '</p>' +
+            '<p class="album-sleeve-title"><em>' + esc(a ? a.album_title : '') + '</em></p>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      prefillEditForm(data);
+    }
+
+    /* ── Pre-fill edit form ──────────────────────────────────── */
+    function prefillEditForm(data) {
+      var u = data.user;
+      document.getElementById('edit-username').value = u.username || '';
+      document.getElementById('edit-location').value = u.location || '';
+      document.getElementById('edit-bio').value      = u.bio || '';
+
+      var albums = data.topAlbums || [];
+      for (var i = 1; i <= 3; i++) {
+        var a = albums[i - 1];
+        document.getElementById('album-' + i + '-artist').value = a ? a.artist : '';
+        document.getElementById('album-' + i + '-title').value  = a ? a.album_title : '';
+      }
+    }
+
+    /* ── Save profile ────────────────────────────────────────── */
+    document.getElementById('edit-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var errEl  = document.getElementById('edit-error');
+      var saveBtn = document.getElementById('save-btn');
+      errEl.style.display = 'none';
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving…';
+
+      var topAlbums = [];
+      for (var i = 1; i <= 3; i++) {
+        var artist = document.getElementById('album-' + i + '-artist').value.trim();
+        var title  = document.getElementById('album-' + i + '-title').value.trim();
+        if (artist && title) topAlbums.push({ artist: artist, album_title: title });
+      }
+
+      try {
+        var res = await fetch('/api/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username:   document.getElementById('edit-username').value.trim(),
+            location:   document.getElementById('edit-location').value.trim(),
+            bio:        document.getElementById('edit-bio').value.trim(),
+            topAlbums:  topAlbums,
+          }),
+        });
+        var data = await res.json();
+        if (!res.ok) { showError(errEl, data.error || 'Save failed.'); return; }
+        var me = await fetch('/api/auth/me');
+        showProfile(await me.json());
+        showTab('view');
+      } catch (e) {
+        showError(errEl, 'Could not connect. Try again.');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Changes';
+      }
+    });
+
+    /* ── Tab switching ───────────────────────────────────────── */
     function showTab(name) {
-      document.querySelectorAll('.profile-tab').forEach(function (btn) {
+      document.querySelectorAll('.profile-tab').forEach(function(btn) {
         btn.classList.toggle('active', btn.textContent.toLowerCase().includes(name === 'view' ? 'view' : 'edit'));
       });
       document.getElementById('tab-view').classList.toggle('active', name === 'view');
       document.getElementById('tab-edit').classList.toggle('active', name === 'edit');
+    }
+
+    /* ── Helpers ─────────────────────────────────────────────── */
+    function showError(el, msg) {
+      el.textContent = msg;
+      el.style.display = '';
+    }
+
+    function esc(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
   </script>
 </body>
