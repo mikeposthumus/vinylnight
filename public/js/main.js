@@ -55,9 +55,41 @@
     });
   }
 
+  // Auto-load album art for any .album-sleeve[data-artist] on the page
+  function loadAlbumArt() {
+    document.querySelectorAll('.album-sleeve[data-artist]').forEach(function (sleeve) {
+      var artist = sleeve.getAttribute('data-artist');
+      var album  = sleeve.getAttribute('data-album');
+      if (!artist || !album) return;
+
+      sleeve.classList.add('loading');
+      var query = encodeURIComponent(artist + ' ' + album);
+      fetch('https://itunes.apple.com/search?term=' + query + '&media=music&entity=album&limit=1')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          sleeve.classList.remove('loading');
+          if (!data.results || !data.results.length) return;
+          var artUrl = data.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+          var img = document.createElement('img');
+          img.className = 'album-sleeve-art';
+          img.alt = album + ' by ' + artist;
+          img.src = artUrl;
+          var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
+          sleeve.insertBefore(img, placeholder || sleeve.firstChild);
+          img.addEventListener('load', function () {
+            if (placeholder) placeholder.style.display = 'none';
+          });
+        })
+        .catch(function () {
+          sleeve.classList.remove('loading');
+        });
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     setActiveNav();
     initAvatarUpload();
     initMobileNav();
+    loadAlbumArt();
   });
 })();
