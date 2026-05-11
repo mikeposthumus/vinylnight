@@ -9,6 +9,19 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .tips-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 640px) {
+      .tips-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
 
@@ -22,8 +35,18 @@
         <li><a href="bylaws.html">Bylaws</a></li>
         <li><a href="profile.html" class="nav-cta">Sign In</a></li>
       </ul>
+      <button class="nav-hamburger" id="nav-toggle" aria-label="Open navigation menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </nav>
+  <div class="mobile-nav" id="mobile-nav" aria-hidden="true">
+    <a href="about.html">About</a>
+    <a href="groups.html">Groups</a>
+    <a href="how-to-start.html">How to Start</a>
+    <a href="bylaws.html">Bylaws</a>
+    <a href="profile.html" class="nav-cta">Sign In</a>
+  </div>
 
   <main>
     <div class="container">
@@ -114,7 +137,7 @@
           <p class="label mb-3">Tips & Considerations</p>
           <h2 style="margin-bottom: 1.5rem;">Things to Keep in Mind</h2>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div class="tips-grid">
 
             <div class="card">
               <h4 class="mb-2">Three is the Magic Number</h4>

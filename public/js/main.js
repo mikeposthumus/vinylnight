@@ -6,7 +6,7 @@
   // Mark active nav link based on current page
   function setActiveNav() {
     const path = window.location.pathname.split('/').pop() || 'index.html';
-    document.querySelectorAll('.nav-links a').forEach(function (link) {
+    document.querySelectorAll('.nav-links a, .mobile-nav a').forEach(function (link) {
       const href = link.getAttribute('href');
       if (href === path || (path === '' && href === 'index.html')) {
         link.classList.add('active');
@@ -31,14 +31,27 @@
     });
   }
 
-  // Simple mobile nav toggle (placeholder — expand as needed)
+  // Mobile nav hamburger toggle
   function initMobileNav() {
-    const toggle = document.getElementById('nav-toggle');
-    const links = document.querySelector('.nav-links');
-    if (!toggle || !links) return;
+    var toggle = document.getElementById('nav-toggle');
+    var mobileNav = document.getElementById('mobile-nav');
+    if (!toggle || !mobileNav) return;
 
-    toggle.addEventListener('click', function () {
-      links.classList.toggle('nav-open');
+    toggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var isOpen = mobileNav.classList.toggle('open');
+      toggle.classList.toggle('open', isOpen);
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      mobileNav.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!toggle.contains(e.target) && !mobileNav.contains(e.target)) {
+        mobileNav.classList.remove('open');
+        toggle.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+        mobileNav.setAttribute('aria-hidden', 'true');
+      }
     });
   }
 

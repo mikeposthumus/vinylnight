@@ -143,6 +143,38 @@
       color: var(--accent-bright);
       margin-bottom: 1.25rem;
     }
+
+    @media (max-width: 768px) {
+      .group-hero-inner {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        align-items: start;
+      }
+
+      .group-stats {
+        flex-wrap: wrap;
+      }
+
+      .group-stats .stat-block {
+        flex: 1 1 calc(50% - 1px);
+      }
+
+      .add-album-row {
+        grid-template-columns: 1fr;
+      }
+
+      .add-album-row > div:last-child {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .section-tab {
+        padding: 0.75rem 1rem;
+        font-size: 0.72rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -157,8 +189,18 @@
         <li><a href="bylaws.html">Bylaws</a></li>
         <li><a href="profile.html" class="nav-cta">Sign In</a></li>
       </ul>
+      <button class="nav-hamburger" id="nav-toggle" aria-label="Open navigation menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </nav>
+  <div class="mobile-nav" id="mobile-nav" aria-hidden="true">
+    <a href="about.html">About</a>
+    <a href="groups.html">Groups</a>
+    <a href="how-to-start.html">How to Start</a>
+    <a href="bylaws.html">Bylaws</a>
+    <a href="profile.html" class="nav-cta">Sign In</a>
+  </div>
 
   <main>
 

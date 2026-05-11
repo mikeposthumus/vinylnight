@@ -33,6 +33,7 @@
 html {
   font-size: 16px;
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -77,6 +78,76 @@ a:hover { color: var(--text); }
 ul { list-style: none; }
 
 /* ── Navigation ─────────────────────────────────────────────── */
+
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 6px;
+  background: none;
+  border: none;
+  flex-shrink: 0;
+}
+
+.nav-hamburger span {
+  display: block;
+  width: 20px;
+  height: 1.5px;
+  background: var(--text-muted);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.nav-hamburger.open span:nth-child(1) {
+  transform: translateY(6.5px) rotate(45deg);
+}
+.nav-hamburger.open span:nth-child(2) {
+  opacity: 0;
+}
+.nav-hamburger.open span:nth-child(3) {
+  transform: translateY(-6.5px) rotate(-45deg);
+}
+
+.mobile-nav {
+  display: none;
+  position: fixed;
+  top: var(--nav-height);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 98;
+}
+
+.mobile-nav.open {
+  display: block;
+}
+
+.mobile-nav a {
+  display: block;
+  padding: 1rem 1.5rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+  font-weight: 400;
+}
+
+.mobile-nav a:last-child {
+  border-bottom: none;
+}
+
+.mobile-nav a:hover,
+.mobile-nav a.active {
+  color: var(--text);
+  background: var(--surface-raised);
+}
+
+.mobile-nav a.nav-cta {
+  color: var(--accent-bright);
+}
 
 .nav {
   position: sticky;
@@ -290,7 +361,7 @@ ul { list-style: none; }
 /* Grid with 1px dividers (like album sleeve grid wall) */
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
   gap: 1px;
   background: var(--border-subtle);
   border: 1px solid var(--border-subtle);
@@ -1133,7 +1204,8 @@ textarea {
 /* ── Responsive ─────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
-  .nav-links a:not(.nav-cta) { display: none; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
 
   .hero-record { opacity: 0.15; right: -40%; }
 
@@ -1148,10 +1220,30 @@ textarea {
 
   .episode-row { grid-template-columns: 5rem 1fr; }
   .episode-count { display: none; }
+
+  .section-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  .page-header { padding: 3rem 0 2rem; }
+  .page-content { padding: 2.5rem 0 4rem; }
+
+  .current-episode-header { flex-direction: column; }
+  .current-episode-header .tag { align-self: flex-start; }
 }
 
 @media (max-width: 480px) {
   .container { padding: 0 1.25rem; }
   .albums-grid { grid-template-columns: repeat(2, 1fr); }
   .current-episode { padding: 1.5rem; }
+
+  .hero-record { display: none; }
+  .hero { padding: 3rem 0 2.5rem; min-height: auto; }
+
+  .section-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+
+  .footer-inner { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .footer-links { flex-wrap: wrap; gap: 1rem; }
+
+  .stat-value { font-size: 1.5rem; }
+
+  .season summary { flex-wrap: wrap; gap: 0.5rem; }
 }

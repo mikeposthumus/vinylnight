@@ -57,6 +57,44 @@
       flex-wrap: wrap;
     }
 
+    .group-detail-section {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 4rem;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .group-detail-section {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .group-detail-section aside {
+        position: static !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .gathering-entry {
+        grid-template-columns: 5rem 1fr;
+      }
+
+      .gathering-entry > span:last-child {
+        display: none;
+      }
+
+      .groups-toolbar input {
+        max-width: 100%;
+        width: 100%;
+      }
+
+      .groups-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+
     /* Record icon on group cards — stays circular (it's a record) */
     .group-detail-record {
       width: 80px;
@@ -94,8 +132,18 @@
         <li><a href="bylaws.html">Bylaws</a></li>
         <li><a href="profile.html" class="nav-cta">Sign In</a></li>
       </ul>
+      <button class="nav-hamburger" id="nav-toggle" aria-label="Open navigation menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </nav>
+  <div class="mobile-nav" id="mobile-nav" aria-hidden="true">
+    <a href="about.html">About</a>
+    <a href="groups.html">Groups</a>
+    <a href="how-to-start.html">How to Start</a>
+    <a href="bylaws.html">Bylaws</a>
+    <a href="profile.html" class="nav-cta">Sign In</a>
+  </div>
 
   <main>
     <div class="container">
@@ -204,7 +252,7 @@
           <p class="label mb-2">Group Detail</p>
           <h2 style="margin-bottom: 2rem;">The Original</h2>
 
-          <div style="display: grid; grid-template-columns: 1fr 320px; gap: 4rem; align-items: start;">
+          <div class="group-detail-section">
             <div>
               <!-- Recent Gatherings -->
               <h3 style="margin-bottom: 1.25rem; font-family: 'Inter', sans-serif; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted);">Recent Gatherings</h3>
