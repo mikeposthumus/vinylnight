@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="The Original — a Vinyl Night group. Minneapolis, MN. Eight years, never a missed month.">
+  <meta name="description" content="The Original — a Vinyl Night group. Grand Rapids, MI. Eight years, never a missed month.">
   <title>The Original — Vinyl Night</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -77,6 +77,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+      transition: border-color 0.2s;
     }
 
     .art-preview img {
@@ -91,6 +93,15 @@
       border-radius: 50%;
       border: 1px solid var(--border);
       opacity: 0.3;
+    }
+
+    .art-preview.loading::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, var(--surface-raised) 50%, transparent 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1s infinite;
     }
 
     /* Tabs */
@@ -127,7 +138,18 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    /* Pending approvals section */
+    /* Pending approvals section — visible to members only */
+
+    /* Current episode album grid */
+    .episode-album-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border-subtle);
+      border: 1px solid var(--border-subtle);
+      margin-bottom: 1.5rem;
+    }
+
     .approvals-section {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -173,6 +195,21 @@
       .section-tab {
         padding: 0.75rem 1rem;
         font-size: 0.72rem;
+      }
+
+      /* Stack episode albums to one column so art displays large */
+      .episode-album-grid {
+        grid-template-columns: 1fr;
+      }
+
+      /* Archive episode rows: stack album tags vertically */
+      .episode-albums-inline {
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+
+      .episode-albums-inline .tag {
+        display: block;
       }
     }
   </style>
@@ -283,7 +320,7 @@
           </div>
 
           <!-- Album grid for this episode — fixed 3 columns, one per record -->
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border-subtle); border: 1px solid var(--border-subtle); margin-bottom: 1.5rem;">
+          <div class="episode-album-grid">
 
             <div class="album-sleeve" style="aspect-ratio: 1;">
               <div class="album-sleeve-placeholder" aria-hidden="true">
@@ -589,11 +626,18 @@
     var artTimer = null;
     function fetchAlbumArt() {
       clearTimeout(artTimer);
+      var artist = document.getElementById('add-artist').value.trim();
+      var album  = document.getElementById('add-album').value.trim();
+      var preview = document.getElementById('art-preview');
+
+      if (!artist || !album) {
+        preview.innerHTML = '<div class="art-preview-icon"></div>';
+        return;
+      }
+
       artTimer = setTimeout(function () {
-        var artist = document.getElementById('add-artist').value.trim();
-        var album  = document.getElementById('add-album').value.trim();
-        var preview = document.getElementById('art-preview');
-        if (!artist || !album) return;
+        preview.classList.add('loading');
+        preview.innerHTML = '';
 
         var query = encodeURIComponent(artist + ' ' + album);
         var url = 'https://itunes.apple.com/search?term=' + query + '&media=music&entity=album&limit=1';
@@ -601,13 +645,19 @@
         fetch(url)
           .then(function (r) { return r.json(); })
           .then(function (data) {
+            preview.classList.remove('loading');
             if (data.results && data.results.length > 0) {
-              /* Swap 100x100 thumbnail for 600x600 */
-              var art = data.results[0].artworkUrl100.replace('100x100', '600x600');
+              /* Apple CDN supports any WxHbb size — swap 100x100 for 600x600 */
+              var art = data.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
               preview.innerHTML = '<img src="' + art + '" alt="Album art">';
+            } else {
+              preview.innerHTML = '<div class="art-preview-icon"></div>';
             }
           })
-          .catch(function () { /* silent — art stays as placeholder */ });
+          .catch(function () {
+            preview.classList.remove('loading');
+            preview.innerHTML = '<div class="art-preview-icon"></div>';
+          });
       }, 600); /* debounce 600ms */
     }
 
