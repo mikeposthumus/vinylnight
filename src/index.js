@@ -49,6 +49,7 @@ async function route(request, url, env) {
   if (path.match(/^\/api\/groups\/[^/]+\/invite$/) && method === 'POST') return handleInvite(request, env, path);
 
   if (path === '/api/me/invitations'                              && method === 'GET')  return handleMyInvitations(request, env);
+  if (path === '/api/me/vinyls'                                  && method === 'GET')  return handleMyVinyls(request, env, url);
   if (path.match(/^\/api\/invitations\/[^/]+\/accept$/)          && method === 'POST') return handleAcceptInvitation(request, env, path);
   if (path.match(/^\/api\/invitations\/[^/]+\/decline$/)         && method === 'POST') return handleDeclineInvitation(request, env, path);
 
@@ -439,6 +440,29 @@ async function handleInvite(request, env, path) {
   ).bind(crypto.randomUUID(), group.id, invitee.id, user.id, 'pending').run();
 
   return json({ ok: true, invited: invitee.username }, 201);
+}
+
+async function handleMyVinyls(request, env, url) {
+  const user = await requireAuth(request, env);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  const PAGE = 9;
+  const offset = Math.max(0, parseInt(url.searchParams.get('offset') || '0', 10));
+
+  const rows = await env.DB.prepare(`
+    SELECT v.artist, v.album_title, v.art_url, v.added_at,
+           e.number AS episode_number, s.number AS season_number,
+           g.name AS group_name, g.slug AS group_slug
+    FROM episode_vinyls v
+    JOIN episodes e ON e.id = v.episode_id
+    JOIN seasons s ON s.id = e.season_id
+    JOIN groups g ON g.id = s.group_id
+    WHERE v.contributed_by = ?
+    ORDER BY v.added_at DESC
+    LIMIT ? OFFSET ?
+  `).bind(user.id, PAGE, offset).all();
+
+  return json({ vinyls: rows.results, hasMore: rows.results.length === PAGE });
 }
 
 async function handleMyInvitations(request, env) {

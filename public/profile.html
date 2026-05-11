@@ -135,13 +135,16 @@
 
             <!-- 3 Current Favorites -->
             <p class="label mb-3">Heavy Rotation</p>
-            <div class="albums-grid" id="view-albums" style="margin-bottom: 3rem;"></div>
+            <div class="albums-grid-3" id="view-albums" style="margin-bottom: 3rem;"></div>
 
             <hr class="groove">
 
             <!-- Recent Contributions -->
             <p class="label mb-3">Recent Contributions</p>
-            <div class="albums-grid" id="view-vinyls" style="grid-template-columns: repeat(3, 1fr);"></div>
+            <div class="albums-grid-3" id="view-vinyls"></div>
+            <div id="load-more-wrap" style="display:none; margin-top: 2rem;">
+              <button id="load-more-btn" class="btn btn-outline" onclick="loadMoreVinyls()">Load more</button>
+            </div>
 
           </div>
         </div>

@@ -1,4 +1,5 @@
 var currentUser = null;
+var vinylsOffset = 0;
 
 /* ── Boot ───────────────────────────────────────────────────── */
 (async function init() {
@@ -141,49 +142,18 @@ function showProfile(data) {
     '</div>';
   }).join('');
 
-  /* Recent contributions */
-  var vinyls = data.recentVinyls || [];
+  /* Recent contributions — first page comes from /api/auth/me */
+  vinylsOffset = 0;
   var vinylsEl = document.getElementById('view-vinyls');
+  vinylsEl.innerHTML = '';
+  var vinyls = data.recentVinyls || [];
   if (!vinyls.length) {
     vinylsEl.innerHTML = '<p class="text-muted text-sm" style="grid-column:1/-1;">No contributions recorded yet.</p>';
+    document.getElementById('load-more-wrap').style.display = 'none';
   } else {
-    vinylsEl.innerHTML = vinyls.map(function(v) {
-      var imgHtml = v.art_url
-        ? '<img src="' + esc(v.art_url) + '" alt="' + esc(v.artist) + '" style="width:100%;height:100%;object-fit:cover;display:block;">'
-        : '<div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>';
-      var meta = 'S' + v.season_number + ' E' + String(v.episode_number).padStart(2, '0');
-      return '<div class="album-sleeve" data-artist="' + esc(v.artist) + '" data-album="' + esc(v.album_title) + '">' +
-        '<div class="album-sleeve-image">' + imgHtml + '</div>' +
-        '<div class="album-sleeve-footer">' +
-          '<p class="album-sleeve-number">' + esc(meta) + '</p>' +
-          '<p class="album-sleeve-label">' + esc(v.artist) + '</p>' +
-          '<p class="album-sleeve-title"><em>' + esc(v.album_title) + '</em></p>' +
-          '<p class="album-sleeve-contributor">' +
-            '<a href="group.html?group=' + esc(v.group_slug) + '" style="color:var(--text-dim);">' +
-              esc(v.group_name) + '</a>' +
-          '</p>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-
-    /* Lazy-load art for sleeves without stored art_url */
-    vinylsEl.querySelectorAll('.album-sleeve[data-artist]').forEach(function(sleeve) {
-      if (sleeve.querySelector('img')) return;
-      var artist = sleeve.dataset.artist;
-      var album  = sleeve.dataset.album;
-      fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + album) + '&media=music&entity=album&limit=1')
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (!d.results || !d.results.length) return;
-          var art = d.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
-          var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
-          if (!placeholder) return;
-          var img = document.createElement('img');
-          img.src = art; img.alt = artist + ' — ' + album;
-          img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-          placeholder.replaceWith(img);
-        }).catch(function() {});
-    });
+    appendVinyls(vinyls);
+    vinylsOffset = vinyls.length;
+    document.getElementById('load-more-wrap').style.display = vinyls.length === 9 ? '' : 'none';
   }
 
   prefillEditForm(data);
@@ -291,6 +261,74 @@ document.getElementById('edit-form').addEventListener('submit', async function(e
     saveBtn.textContent = 'Save Changes';
   }
 });
+
+/* ── Contributions pagination ────────────────────────────────── */
+function appendVinyls(vinyls) {
+  var vinylsEl = document.getElementById('view-vinyls');
+  var frag = document.createDocumentFragment();
+  var tmp = document.createElement('div');
+  tmp.innerHTML = vinyls.map(function(v) {
+    var imgHtml = v.art_url
+      ? '<img src="' + esc(v.art_url) + '" alt="' + esc(v.artist) + '" style="width:100%;height:100%;object-fit:cover;display:block;">'
+      : '<div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>';
+    var meta = 'S' + v.season_number + ' E' + String(v.episode_number).padStart(2, '0');
+    return '<div class="album-sleeve" data-artist="' + esc(v.artist) + '" data-album="' + esc(v.album_title) + '">' +
+      '<div class="album-sleeve-image">' + imgHtml + '</div>' +
+      '<div class="album-sleeve-footer">' +
+        '<p class="album-sleeve-number">' + esc(meta) + '</p>' +
+        '<p class="album-sleeve-label">' + esc(v.artist) + '</p>' +
+        '<p class="album-sleeve-title"><em>' + esc(v.album_title) + '</em></p>' +
+        '<p class="album-sleeve-contributor">' +
+          '<a href="group.html?group=' + esc(v.group_slug) + '" style="color:var(--text-dim);">' +
+            esc(v.group_name) + '</a>' +
+        '</p>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  /* Move newly created nodes and lazy-load art */
+  Array.from(tmp.children).forEach(function(el) { frag.appendChild(el); });
+  vinylsEl.appendChild(frag);
+
+  vinylsEl.querySelectorAll('.album-sleeve[data-artist]').forEach(function(sleeve) {
+    if (sleeve.querySelector('img') || sleeve.dataset.artLoading) return;
+    sleeve.dataset.artLoading = '1';
+    var artist = sleeve.dataset.artist;
+    var album  = sleeve.dataset.album;
+    fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + album) + '&media=music&entity=album&limit=1')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (!d.results || !d.results.length) return;
+        var art = d.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+        var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
+        if (!placeholder) return;
+        var img = document.createElement('img');
+        img.src = art; img.alt = artist + ' — ' + album;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+        placeholder.replaceWith(img);
+      }).catch(function() {});
+  });
+}
+
+async function loadMoreVinyls() {
+  var btn = document.getElementById('load-more-btn');
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+  try {
+    var res = await fetch('/api/me/vinyls?offset=' + vinylsOffset);
+    if (!res.ok) return;
+    var data = await res.json();
+    var vinyls = data.vinyls || [];
+    if (vinyls.length) {
+      appendVinyls(vinyls);
+      vinylsOffset += vinyls.length;
+    }
+    document.getElementById('load-more-wrap').style.display = data.hasMore ? '' : 'none';
+  } catch (e) { /* silent */ } finally {
+    btn.disabled = false;
+    btn.textContent = 'Load more';
+  }
+}
 
 /* ── Helpers ─────────────────────────────────────────────────── */
 function showError(el, msg) {

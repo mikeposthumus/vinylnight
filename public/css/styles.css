@@ -928,6 +928,15 @@ textarea {
   border: 1px solid var(--border-subtle);
 }
 
+/* 3-column full-width grid — used on profile heavy rotation + contributions */
+.albums-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+}
+
 /* ── Numbered sections ──────────────────────────────────────── */
 
 .numbered-section {
@@ -1333,6 +1342,7 @@ textarea {
   .profile-bio-groups-row { grid-template-columns: 1fr !important; }
 
   .albums-grid { grid-template-columns: repeat(3, 1fr); }
+  .albums-grid-3 { grid-template-columns: 1fr; }
 
   .form-row { grid-template-columns: 1fr; }
 
@@ -1353,6 +1363,7 @@ textarea {
 @media (max-width: 480px) {
   .container { padding: 0 1.25rem; }
   .albums-grid { grid-template-columns: repeat(2, 1fr); }
+  .albums-grid-3 { grid-template-columns: 1fr; }
   .current-episode { padding: 1.5rem; }
 
   .hero-record { display: none; }
