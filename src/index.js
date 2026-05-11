@@ -41,7 +41,8 @@ async function route(request, url, env) {
   if (path === '/api/profile'       && method === 'GET')  return handleGetProfile(request, env);
   if (path === '/api/profile'       && method === 'PUT')  return handleUpdateProfile(request, env);
 
-  if (path.match(/^\/api\/users\/[^/]+$/)               && method === 'GET')  return handleGetUser(request, env, path);
+  if (path.match(/^\/api\/users\/[^/]+$/)                         && method === 'GET')  return handleGetUser(request, env, path);
+  if (path.match(/^\/api\/users\/[^/]+\/vinyls$/)                 && method === 'GET')  return handleUserVinyls(request, env, path, url);
 
   if (path === '/api/groups'        && method === 'GET')  return handleListGroups(request, env);
   if (path.match(/^\/api\/groups\/[^/]+$/) && method === 'GET') return handleGetGroup(request, env, path);
@@ -259,6 +260,30 @@ async function handleGetUser(request, env, path) {
     topAlbums:    topAlbums.results,
     recentVinyls: recentVinyls.results,
   });
+}
+
+async function handleUserVinyls(request, env, path, url) {
+  const username = path.split('/')[3];
+  const user = await env.DB.prepare('SELECT id FROM users WHERE username = ?').bind(username).first();
+  if (!user) return json({ error: 'User not found' }, 404);
+
+  const PAGE = 9;
+  const offset = Math.max(0, parseInt(url.searchParams.get('offset') || '0', 10));
+
+  const rows = await env.DB.prepare(`
+    SELECT v.artist, v.album_title, v.art_url, v.added_at,
+           e.number AS episode_number, s.number AS season_number,
+           g.name AS group_name, g.slug AS group_slug
+    FROM episode_vinyls v
+    JOIN episodes e ON e.id = v.episode_id
+    JOIN seasons s ON s.id = e.season_id
+    JOIN groups g ON g.id = s.group_id
+    WHERE v.contributed_by = ?
+    ORDER BY v.added_at DESC
+    LIMIT ? OFFSET ?
+  `).bind(user.id, PAGE, offset).all();
+
+  return json({ vinyls: rows.results, hasMore: rows.results.length === PAGE });
 }
 
 // ── Groups ────────────────────────────────────────────────────────────

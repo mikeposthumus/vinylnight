@@ -50,39 +50,46 @@
 
       <div id="user-content" style="display:none;">
 
+        <!-- Header -->
         <header class="page-header">
-          <div>
-            <p class="label mb-2" id="user-role-label">Member</p>
-            <h1 id="user-username"></h1>
-            <p class="text-sm text-muted mt-1" id="user-location"></p>
+          <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div class="avatar avatar-lg" id="user-avatar">?</div>
+            <div>
+              <p class="label mb-1" id="user-role-label">Member</p>
+              <h1 id="user-username" style="margin-bottom: 0.2rem;"></h1>
+              <p class="text-sm text-muted" id="user-location"></p>
+            </div>
           </div>
         </header>
 
         <div class="page-content">
-          <div class="profile-layout">
 
-            <!-- Sidebar -->
-            <aside class="profile-sidebar">
-              <div class="avatar avatar-lg mb-3" id="user-avatar">?</div>
-              <p class="profile-bio" id="user-bio"></p>
-
-              <hr class="groove" style="margin: 1.75rem 0;">
-
+          <!-- Bio + Groups row -->
+          <div class="profile-bio-groups-row" style="display: grid; grid-template-columns: 1fr 240px; gap: 3rem; margin-bottom: 3rem;">
+            <p class="profile-bio" id="user-bio" style="margin: 0;"></p>
+            <div>
               <p class="label mb-3">Groups</p>
               <div class="profile-groups-list" id="user-groups">
                 <p class="text-xs text-muted">No groups.</p>
               </div>
-            </aside>
-
-            <!-- Main -->
-            <div>
-              <p class="label mb-3">Recent Contributions</p>
-              <div id="vinyls-grid" class="albums-grid" style="grid-template-columns: repeat(3, 1fr);">
-                <p class="text-muted text-sm">Loading&hellip;</p>
-              </div>
             </div>
-
           </div>
+
+          <hr class="groove">
+
+          <!-- Heavy Rotation -->
+          <p class="label mb-3">Heavy Rotation</p>
+          <div class="albums-grid-3" id="user-albums" style="margin-bottom: 3rem;"></div>
+
+          <hr class="groove">
+
+          <!-- Recent Contributions -->
+          <p class="label mb-3">Recent Contributions</p>
+          <div class="albums-grid-3" id="user-vinyls"></div>
+          <div id="load-more-wrap" style="display:none; margin-top: 2rem;">
+            <button id="load-more-btn" class="btn btn-outline" onclick="loadMoreVinyls()">Load more</button>
+          </div>
+
         </div>
       </div>
 
