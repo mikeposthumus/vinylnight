@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Vinyl Night member profile">
+  <title>Member — Vinyl Night</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">Vinyl<em>Night</em></a>
+      <ul class="nav-links">
+        <li><a href="about.html">About</a></li>
+        <li><a href="groups.html" class="active">Groups</a></li>
+        <li><a href="how-to-start.html">How to Start</a></li>
+        <li><a href="bylaws.html">Bylaws</a></li>
+        <li><a href="profile.html" class="nav-cta" id="nav-auth-link">Sign In</a></li>
+      </ul>
+      <button class="nav-hamburger" id="nav-toggle" aria-label="Open navigation menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+  <div class="mobile-nav" id="mobile-nav" aria-hidden="true">
+    <a href="about.html">About</a>
+    <a href="groups.html">Groups</a>
+    <a href="how-to-start.html">How to Start</a>
+    <a href="bylaws.html">Bylaws</a>
+    <a href="profile.html" class="nav-cta">Sign In</a>
+  </div>
+
+  <main>
+    <div class="container">
+
+      <div id="not-found" style="display:none;">
+        <div class="page-header">
+          <p class="label mb-2">Member</p>
+          <h1>Not found</h1>
+        </div>
+        <div class="page-content">
+          <p class="text-muted">This user doesn't exist. <a href="groups.html">Browse groups</a></p>
+        </div>
+      </div>
+
+      <div id="user-content" style="display:none;">
+
+        <header class="page-header">
+          <div>
+            <p class="label mb-2" id="user-role-label">Member</p>
+            <h1 id="user-username"></h1>
+            <p class="text-sm text-muted mt-1" id="user-location"></p>
+          </div>
+        </header>
+
+        <div class="page-content">
+          <div class="profile-layout">
+
+            <!-- Sidebar -->
+            <aside class="profile-sidebar">
+              <div class="avatar avatar-lg mb-3" id="user-avatar">?</div>
+              <p class="profile-bio" id="user-bio"></p>
+
+              <hr class="groove" style="margin: 1.75rem 0;">
+
+              <p class="label mb-3">Groups</p>
+              <div class="profile-groups-list" id="user-groups">
+                <p class="text-xs text-muted">No groups.</p>
+              </div>
+            </aside>
+
+            <!-- Main -->
+            <div>
+              <p class="label mb-3">Recent Contributions</p>
+              <div id="vinyls-grid" class="albums-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <p class="text-muted text-sm">Loading&hellip;</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="footer-logo">Vinyl<em style="font-style:italic; color: var(--accent-dim);">Night</em></span>
+      <nav class="footer-links">
+        <a href="about.html">About</a>
+        <a href="how-to-start.html">How to Start</a>
+        <a href="bylaws.html">Bylaws</a>
+      </nav>
+      <span class="footer-copy">&copy; 2025 VinylNight.net</span>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/user.js"></script>
+</body>
+</html>

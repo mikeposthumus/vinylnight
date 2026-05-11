@@ -41,6 +41,8 @@ async function route(request, url, env) {
   if (path === '/api/profile'       && method === 'GET')  return handleGetProfile(request, env);
   if (path === '/api/profile'       && method === 'PUT')  return handleUpdateProfile(request, env);
 
+  if (path.match(/^\/api\/users\/[^/]+$/)               && method === 'GET')  return handleGetUser(request, env, path);
+
   if (path === '/api/groups'        && method === 'GET')  return handleListGroups(request, env);
   if (path.match(/^\/api\/groups\/[^/]+$/) && method === 'GET') return handleGetGroup(request, env, path);
   if (path.match(/^\/api\/groups\/[^/]+\/current-episode$/) && method === 'GET') return handleCurrentEpisode(request, env, path);
@@ -195,6 +197,51 @@ async function handleUpdateProfile(request, env) {
   }
 
   return json({ ok: true });
+}
+
+// ── Users (public) ───────────────────────────────────────────────────
+
+async function handleGetUser(request, env, path) {
+  const username = path.split('/').pop();
+  const user = await env.DB.prepare(
+    'SELECT id, username, location, bio, avatar_url FROM users WHERE username = ?'
+  ).bind(username).first();
+  if (!user) return json({ error: 'User not found' }, 404);
+
+  const [groups, topAlbums, recentVinyls] = await Promise.all([
+    env.DB.prepare(`
+      SELECT g.name, g.slug, gm.role
+      FROM group_members gm
+      JOIN groups g ON g.id = gm.group_id
+      WHERE gm.user_id = ? AND gm.status = 'active'
+      ORDER BY gm.joined_at
+    `).bind(user.id).all(),
+
+    env.DB.prepare(
+      'SELECT rank, artist, album_title FROM user_top_albums WHERE user_id = ? ORDER BY rank'
+    ).bind(user.id).all(),
+
+    env.DB.prepare(`
+      SELECT v.artist, v.album_title, v.art_url, v.added_at,
+             e.date AS episode_date, e.number AS episode_number,
+             s.number AS season_number,
+             g.name AS group_name, g.slug AS group_slug
+      FROM episode_vinyls v
+      JOIN episodes e ON e.id = v.episode_id
+      JOIN seasons s ON s.id = e.season_id
+      JOIN groups g ON g.id = s.group_id
+      WHERE v.contributed_by = ?
+      ORDER BY v.added_at DESC
+      LIMIT 9
+    `).bind(user.id).all(),
+  ]);
+
+  return json({
+    user,
+    groups:       groups.results,
+    topAlbums:    topAlbums.results,
+    recentVinyls: recentVinyls.results,
+  });
 }
 
 // ── Groups ────────────────────────────────────────────────────────────

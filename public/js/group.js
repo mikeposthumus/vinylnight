@@ -155,7 +155,7 @@ function renderMembers() {
   grid.innerHTML = members.map(function(m) {
     var initial = (m.username || '?')[0].toUpperCase();
     var roleLabel = m.role === 'founder' ? 'Founder' : 'Member';
-    return '<a href="profile.html" class="member-card">' +
+    return '<a href="user.html?user=' + esc(m.username) + '" class="member-card">' +
       '<div class="avatar">' + esc(initial) + '</div>' +
       '<div>' +
         '<p class="member-card-role">' + roleLabel + '</p>' +
