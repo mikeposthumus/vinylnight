@@ -9,78 +9,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
-  <style>
-    /* ── Hero cover stack ──────────────────────────────────────── */
-    .hero {
-      align-items: center;
-      padding: 2rem 0 2.5rem;
-      min-height: calc(70vh - var(--nav-height));
-    }
-
-    .hero-stack-wrap {
-      display: flex;
-      justify-content: center;
-      padding: 1rem 0;
-    }
-
-    .hero-cover-stack {
-      position: relative;
-      width: clamp(340px, 58vw, 640px);
-    }
-
-    /* Stacked squares behind the main cover */
-    .hero-cover-back {
-      position: absolute;
-      inset: 0;
-    }
-
-    .hero-cover-back:nth-child(1) {
-      background: #181020;   /* dark indigo */
-      transform: rotate(5.5deg) translate(14px, 10px);
-      z-index: 0;
-    }
-
-    .hero-cover-back:nth-child(2) {
-      background: #1a1210;   /* dark sienna */
-      transform: rotate(-3.5deg) translate(-10px, 16px);
-      z-index: 1;
-    }
-
-    .hero-cover {
-      position: relative;
-      z-index: 2;
-      background: var(--surface-raised);
-      aspect-ratio: 1 / 1;
-      padding: clamp(1.75rem, 4vw, 2.75rem);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      box-shadow:
-        0 32px 80px rgba(0, 0, 0, 0.75),
-        0 10px 28px rgba(0, 0, 0, 0.55);
-    }
-
-    .hero-cover .hero-label {
-      margin-bottom: 0;
-    }
-
-    .hero-cover h1 {
-      font-size: clamp(2.2rem, 6.5vw, 4rem);
-      margin-bottom: 1rem;
-    }
-
-    .hero-cover .hero-sub {
-      font-size: 0.9rem;
-      margin-bottom: 0;
-      max-width: 100%;
-    }
-
-    @media (max-width: 640px) {
-      .hero-cover-stack { width: clamp(260px, 86vw, 360px); }
-      .hero-cover-back:nth-child(1) { transform: rotate(4deg) translate(10px, 7px); }
-      .hero-cover-back:nth-child(2) { transform: rotate(-2.5deg) translate(-7px, 11px); }
-    }
-  </style>
 </head>
 <body>
 
@@ -201,43 +129,6 @@
   </footer>
 
   <script src="js/main.js"></script>
-  <script>
-    (async function loadGroups() {
-      var grid = document.getElementById('groups-grid');
-      try {
-        var res = await fetch('/api/groups');
-        var data = await res.json();
-        var groups = (data.groups || []).slice(0, 3);
-        if (!groups.length) {
-          grid.innerHTML = '<p class="text-muted text-sm">No groups yet.</p>';
-          return;
-        }
-        grid.innerHTML = groups.map(function(g) {
-          var gatherings = g.episode_count || 0;
-          var gatheringsLabel = gatherings ? '<strong>' + gatherings + '</strong> gatherings' : 'Just getting started';
-          return '<div class="card group-card">' +
-            '<div>' +
-              '<p class="group-card-name">' + esc(g.name) + '</p>' +
-              '<p class="group-card-location">' + esc(g.location || '') + '</p>' +
-            '</div>' +
-            '<p class="text-muted text-sm">' + esc(g.description || '') + '</p>' +
-            '<div class="group-card-footer">' +
-              '<div class="meta-row">' +
-                '<span class="meta-item"><strong>' + (g.member_count || 0) + '</strong> members</span>' +
-                '<span class="meta-item">' + gatheringsLabel + '</span>' +
-              '</div>' +
-              '<a href="group.html?group=' + esc(g.slug) + '" class="btn btn-ghost text-xs">View &rarr;</a>' +
-            '</div>' +
-          '</div>';
-        }).join('');
-      } catch (e) {
-        grid.innerHTML = '<p class="text-muted text-sm">Could not load groups.</p>';
-      }
-    })();
-
-    function esc(str) {
-      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-  </script>
+  <script src="js/index.js"></script>
 </body>
 </html>
