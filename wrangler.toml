@@ -1,8 +1,8 @@
 name = "vinylnight"
 compatibility_date = "2025-01-01"
 
-# Static site served from repo root via Cloudflare Pages
-# This file is for future Workers / D1 / R2 integration
+[assets]
+directory = "."
 
 # Cloudflare D1 database (user login, groups, gatherings)
 # Uncomment when ready to provision:
