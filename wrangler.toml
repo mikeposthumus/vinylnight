@@ -1,0 +1,21 @@
+name = "vinylnight"
+compatibility_date = "2025-01-01"
+
+# Static site served from repo root via Cloudflare Pages
+# This file is for future Workers / D1 / R2 integration
+
+# Cloudflare D1 database (user login, groups, gatherings)
+# Uncomment when ready to provision:
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "vinylnight-db"
+# database_id = "placeholder-replace-with-actual-id"
+
+# Cloudflare R2 bucket (avatar image storage)
+# Uncomment when ready to provision:
+# [[r2_buckets]]
+# binding = "AVATARS"
+# bucket_name = "vinylnight-avatars"
+
+[vars]
+ENVIRONMENT = "development"

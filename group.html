@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Placeholder Group — a Vinyl Night group page.">
+  <title>Placeholder Group — Vinyl Night</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Group hero banner */
+    .group-hero {
+      padding: 4rem 0 3rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .group-hero-inner {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 3rem;
+      align-items: end;
+    }
+
+    .group-name {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      margin-bottom: 0.5rem;
+    }
+
+    .group-location {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      margin-bottom: 1.5rem;
+    }
+
+    .group-stats {
+      display: flex;
+      gap: 1px;
+      background: var(--border-subtle);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* Add-album form */
+    .add-album-form {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      padding: 1.75rem;
+      margin-top: 2rem;
+    }
+
+    .add-album-form-title {
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .add-album-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 1rem;
+      align-items: end;
+    }
+
+    /* Art preview thumbnail */
+    .art-preview {
+      width: 56px;
+      height: 56px;
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .art-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .art-preview-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      opacity: 0.3;
+    }
+
+    /* Tabs */
+    .section-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 3rem;
+    }
+
+    .section-tab {
+      padding: 0.75rem 1.5rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+    }
+
+    .section-tab.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Pending approvals section */
+    .approvals-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent-bright);
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .approvals-title {
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent-bright);
+      margin-bottom: 1.25rem;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">Vinyl<em>Night</em></a>
+      <ul class="nav-links">
+        <li><a href="about.html">About</a></li>
+        <li><a href="groups.html" class="active">Groups</a></li>
+        <li><a href="how-to-start.html">How to Start</a></li>
+        <li><a href="bylaws.html">Bylaws</a></li>
+        <li><a href="profile.html" class="nav-cta">Sign In</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- ── Group Hero ──────────────────────────────────────────── -->
+    <div class="container">
+      <div class="group-hero">
+        <div class="group-hero-inner">
+          <div>
+            <p class="label mb-2">&larr; <a href="groups.html" style="color: var(--text-muted); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase;">All Groups</a></p>
+            <h1 class="group-name">Placeholder Group Name</h1>
+            <p class="group-location">City, Country &mdash; Est. 0000</p>
+            <p class="text-muted text-sm" style="max-width: 520px; line-height: 1.8;">
+              Placeholder — a short description of this group. Who they are, where they meet, and what makes their vinyl nights unique.
+            </p>
+          </div>
+
+          <!-- Stats -->
+          <div class="group-stats" aria-label="Group statistics">
+            <div class="stat-block">
+              <span class="stat-value">00</span>
+              <span class="stat-label">Members</span>
+            </div>
+            <div class="stat-block">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Seasons</span>
+            </div>
+            <div class="stat-block">
+              <span class="stat-value">00</span>
+              <span class="stat-label">Episodes</span>
+            </div>
+            <div class="stat-block">
+              <span class="stat-value">00</span>
+              <span class="stat-label">Albums</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tabs: Now Playing / Members / Archive ──────────────── -->
+    <div class="container" style="padding-top: 2.5rem;">
+
+      <div class="section-tabs">
+        <button class="section-tab active" onclick="switchTab('now')">Now Playing</button>
+        <button class="section-tab" onclick="switchTab('members')">Members</button>
+        <button class="section-tab" onclick="switchTab('archive')">Archive</button>
+      </div>
+
+      <!-- ── NOW PLAYING tab ────────────────────────────────────── -->
+      <div class="tab-panel active" id="tab-now">
+
+        <!-- ── ACCESS STATES — show only the relevant one ──────── -->
+
+        <!-- [STATE A] Not logged in — read only -->
+        <div class="access-notice" id="state-guest">
+          <p><strong>Listening in.</strong> <a href="profile.html">Sign in</a> to request membership and add your vinyl selections.</p>
+        </div>
+
+        <!-- [STATE B] Logged in, not a member — can request to join -->
+        <!-- Remove display:none when rendering for a non-member user -->
+        <div class="access-notice" style="display: none;" id="state-nonmember">
+          <p><strong>You're not a member of this group.</strong> Members vote to approve new members. <button class="btn btn-outline" style="margin-left: 1rem; padding: 0.4rem 1rem; font-size: 0.72rem;" onclick="requestJoin()">Request to Join</button></p>
+        </div>
+
+        <!-- [STATE C] Member — full access notice -->
+        <!-- Remove display:none when rendering for a member user -->
+        <div class="access-notice" style="display: none; border-left-color: var(--accent-bright);" id="state-member">
+          <p><strong>You're a member.</strong> Add your album selections below. All members must approve new join requests.</p>
+        </div>
+
+        <!-- Current Episode Header -->
+        <div class="current-episode">
+          <div class="current-episode-header">
+            <div>
+              <p class="label mb-2">Season 0 &mdash; Episode 00</p>
+              <h2 style="font-size: 1.5rem; margin-bottom: 0.35rem;">Placeholder Month 0000</h2>
+              <p class="text-sm text-muted">Hosted by <a href="profile.html">Placeholder Host</a> &middot; 00 attending</p>
+            </div>
+            <span class="tag tag-green">Current Episode</span>
+          </div>
+
+          <!-- Album grid for this episode — fixed 3 columns, one per record -->
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border-subtle); border: 1px solid var(--border-subtle); margin-bottom: 1.5rem;">
+
+            <div class="album-sleeve" style="aspect-ratio: 1;">
+              <div class="album-sleeve-placeholder" aria-hidden="true">
+                <div class="album-sleeve-placeholder-disc"></div>
+              </div>
+              <div class="album-sleeve-meta">
+                <p class="album-sleeve-label">Artist Name</p>
+                <p class="album-sleeve-title"><em>Album Title</em></p>
+              </div>
+              <span class="album-sleeve-number" style="color: var(--text-muted); font-size: 0.65rem;">Added by Placeholder</span>
+            </div>
+
+            <div class="album-sleeve" style="aspect-ratio: 1;">
+              <div class="album-sleeve-placeholder" aria-hidden="true">
+                <div class="album-sleeve-placeholder-disc"></div>
+              </div>
+              <div class="album-sleeve-meta">
+                <p class="album-sleeve-label">Artist Name</p>
+                <p class="album-sleeve-title"><em>Album Title</em></p>
+              </div>
+              <span class="album-sleeve-number" style="color: var(--text-muted); font-size: 0.65rem;">Added by Placeholder</span>
+            </div>
+
+            <!-- Third slot — empty until a member adds their pick -->
+            <div class="album-sleeve" style="aspect-ratio: 1; border-style: dashed; opacity: 0.35; cursor: default;">
+              <div class="album-sleeve-placeholder" aria-hidden="true">
+                <div class="album-sleeve-placeholder-disc"></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Add-album form — visible to members only -->
+          <!-- Remove display:none when rendering for a member -->
+          <div class="add-album-form" style="display: none;" id="add-album-form">
+            <p class="add-album-form-title">Add your selection for this episode</p>
+            <div class="add-album-row">
+              <div>
+                <label for="add-artist">Artist</label>
+                <input type="text" id="add-artist" placeholder="Artist name" oninput="fetchAlbumArt()">
+              </div>
+              <div>
+                <label for="add-album">Album</label>
+                <input type="text" id="add-album" placeholder="Album title" oninput="fetchAlbumArt()">
+              </div>
+              <div style="display: flex; align-items: flex-end; gap: 0.75rem;">
+                <!-- Live art preview -->
+                <div class="art-preview" id="art-preview" title="Album art preview">
+                  <div class="art-preview-icon"></div>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="addAlbum()">Add</button>
+              </div>
+            </div>
+            <p class="form-hint mt-2">Album art is fetched automatically from the iTunes catalog as you type.</p>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ── MEMBERS tab ─────────────────────────────────────────── -->
+      <div class="tab-panel" id="tab-members">
+
+        <!-- Pending join requests — visible to members only -->
+        <!-- Remove display:none when rendering for a member with pending requests -->
+        <div class="approvals-section" style="display: none;" id="pending-approvals">
+          <p class="approvals-title">Pending Join Requests</p>
+          <p class="text-xs text-muted mb-3">All current members must approve a new member. One rejection blocks the request.</p>
+
+          <div>
+            <div class="pending-row">
+              <div class="pending-row-info">
+                <div class="avatar" style="width: 36px; height: 36px; font-size: 0.85rem;">P</div>
+                <div>
+                  <p class="text-sm" style="color: var(--text);">Placeholder Username</p>
+                  <p class="text-xs text-muted">Requested Placeholder Date</p>
+                </div>
+              </div>
+              <div class="pending-row-actions">
+                <button class="btn btn-outline" style="padding: 0.4rem 0.875rem; font-size: 0.72rem; border-color: var(--accent-dim); color: var(--accent-bright);">Approve</button>
+                <button class="btn btn-danger" style="padding: 0.4rem 0.875rem; font-size: 0.72rem;">Decline</button>
+              </div>
+            </div>
+
+            <div class="pending-row">
+              <div class="pending-row-info">
+                <div class="avatar" style="width: 36px; height: 36px; font-size: 0.85rem;">P</div>
+                <div>
+                  <p class="text-sm" style="color: var(--text);">Placeholder Username</p>
+                  <p class="text-xs text-muted">Requested Placeholder Date</p>
+                </div>
+              </div>
+              <div class="pending-row-actions">
+                <button class="btn btn-outline" style="padding: 0.4rem 0.875rem; font-size: 0.72rem; border-color: var(--accent-dim); color: var(--accent-bright);">Approve</button>
+                <button class="btn btn-danger" style="padding: 0.4rem 0.875rem; font-size: 0.72rem;">Decline</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Member grid -->
+        <div class="section-header mb-3">
+          <h2>Members</h2>
+          <span class="text-xs text-muted">00 total</span>
+        </div>
+
+        <div class="members-grid">
+
+          <a href="profile.html" class="member-card">
+            <div class="avatar">F</div>
+            <div>
+              <p class="member-card-role">Founder</p>
+              <p class="member-card-name">Placeholder Name</p>
+            </div>
+          </a>
+
+          <a href="profile.html" class="member-card">
+            <div class="avatar">M</div>
+            <div>
+              <p class="member-card-name">Placeholder Name</p>
+            </div>
+          </a>
+
+          <a href="profile.html" class="member-card">
+            <div class="avatar">M</div>
+            <div>
+              <p class="member-card-name">Placeholder Name</p>
+            </div>
+          </a>
+
+          <a href="profile.html" class="member-card">
+            <div class="avatar">M</div>
+            <div>
+              <p class="member-card-name">Placeholder Name</p>
+            </div>
+          </a>
+
+          <a href="profile.html" class="member-card">
+            <div class="avatar">M</div>
+            <div>
+              <p class="member-card-name">Placeholder Name</p>
+            </div>
+          </a>
+
+          <a href="profile.html" class="member-card">
+            <div class="avatar">M</div>
+            <div>
+              <p class="member-card-name">Placeholder Name</p>
+            </div>
+          </a>
+
+        </div>
+
+        <!-- Request to join (non-members) -->
+        <div class="access-notice" id="join-cta">
+          <p>
+            <strong>Want to join this group?</strong>
+            All current members vote to approve new members.
+            <a href="profile.html">Sign in</a> to request membership.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- ── ARCHIVE tab ─────────────────────────────────────────── -->
+      <div class="tab-panel" id="tab-archive">
+
+        <div class="section-header" style="margin-bottom: 2rem;">
+          <h2>Archive</h2>
+          <span class="text-xs text-muted">0 seasons &middot; 00 episodes</span>
+        </div>
+
+        <!-- Season 2 — current year -->
+        <details class="season" open>
+          <summary>
+            <div>
+              <span class="season-title">Season 2 &mdash; 0000</span>
+              <p class="text-xs text-muted mt-1">00 episodes &middot; 00 albums played</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1.5rem;">
+              <span class="season-meta">Current Season</span>
+              <span class="season-chevron">&#9656;</span>
+            </div>
+          </summary>
+
+          <div class="episodes-list">
+
+            <a href="#" class="episode-row">
+              <div>
+                <p class="text-xs text-muted" style="letter-spacing: 0.08em; text-transform: uppercase;">S2 E05</p>
+                <p class="episode-date">Placeholder Month 0000</p>
+              </div>
+              <div>
+                <p class="text-sm" style="color: var(--text); margin-bottom: 0.4rem;">Placeholder Host</p>
+                <div class="episode-albums-inline">
+                  <span class="tag">Artist &mdash; <em>Album</em></span>
+                  <span class="tag">Artist &mdash; <em>Album</em></span>
+                </div>
+              </div>
+              <span class="episode-count">00 attended</span>
+            </a>
+
+            <a href="#" class="episode-row">
+              <div>
+                <p class="text-xs text-muted" style="letter-spacing: 0.08em; text-transform: uppercase;">S2 E04</p>
+                <p class="episode-date">Placeholder Month 0000</p>
+              </div>
+              <div>
+                <p class="text-sm" style="color: var(--text); margin-bottom: 0.4rem;">Placeholder Host</p>
+                <div class="episode-albums-inline">
+                  <span class="tag">Artist &mdash; <em>Album</em></span>
+                </div>
+              </div>
+              <span class="episode-count">00 attended</span>
+            </a>
+
+            <a href="#" class="episode-row">
+              <div>
+                <p class="text-xs text-muted" style="letter-spacing: 0.08em; text-transform: uppercase;">S2 E03</p>
+                <p class="episode-date">Placeholder Month 0000</p>
+              </div>
+              <div>
+                <p class="text-sm" style="color: var(--text); margin-bottom: 0.4rem;">Placeholder Host</p>
+                <div class="episode-albums-inline">
+                  <span class="tag">Artist &mdash; <em>Album</em></span>
+                  <span class="tag">Artist &mdash; <em>Album</em></span>
+                  <span class="tag">Artist &mdash; <em>Album</em></span>
+                </div>
+              </div>
+              <span class="episode-count">00 attended</span>
+            </a>
+
+          </div>
+        </details>
+
+        <!-- Season 1 — prior year -->
+        <details class="season">
+          <summary>
+            <div>
+              <span class="season-title">Season 1 &mdash; 0000</span>
+              <p class="text-xs text-muted mt-1">00 episodes &middot; 00 albums played</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1.5rem;">
+              <span class="season-meta">Completed</span>
+              <span class="season-chevron">&#9656;</span>
+            </div>
+          </summary>
+
+          <div class="episodes-list">
+
+            <a href="#" class="episode-row">
+              <div>
+                <p class="text-xs text-muted" style="letter-spacing: 0.08em; text-transform: uppercase;">S1 E12</p>
+                <p class="episode-date">Placeholder Month 0000</p>
+              </div>
+              <div>
+                <p class="text-sm" style="color: var(--text); margin-bottom: 0.4rem;">Placeholder Host</p>
+                <div class="episode-albums-inline">
+                  <span class="tag">Artist &mdash; <em>Album</em></span>
+                  <span class="tag">Artist &mdash; <em>Album</em></span>
+                </div>
+              </div>
+              <span class="episode-count">00 attended</span>
+            </a>
+
+            <a href="#" class="episode-row">
+              <div>
+                <p class="text-xs text-muted" style="letter-spacing: 0.08em; text-transform: uppercase;">S1 E11</p>
+                <p class="episode-date">Placeholder Month 0000</p>
+              </div>
+              <div>
+                <p class="text-sm" style="color: var(--text); margin-bottom: 0.4rem;">Placeholder Host</p>
+                <div class="episode-albums-inline">
+                  <span class="tag">Artist &mdash; <em>Album</em></span>
+                </div>
+              </div>
+              <span class="episode-count">00 attended</span>
+            </a>
+
+          </div>
+        </details>
+
+        <div style="padding: 2rem 0;">
+          <p class="text-xs text-muted">Older episodes load as the group builds its history.</p>
+        </div>
+
+      </div>
+
+    </div><!-- /container -->
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="footer-logo">Vinyl<em style="font-style:italic; color: var(--accent-dim);">Night</em></span>
+      <nav class="footer-links">
+        <a href="about.html">About</a>
+        <a href="how-to-start.html">How to Start</a>
+        <a href="bylaws.html">Bylaws</a>
+      </nav>
+      <span class="footer-copy">&copy; 2025 VinylNight.net</span>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    /* Tab switching */
+    function switchTab(name) {
+      ['now', 'members', 'archive'].forEach(function (t) {
+        document.getElementById('tab-' + t).classList.toggle('active', t === name);
+      });
+      document.querySelectorAll('.section-tab').forEach(function (btn, i) {
+        btn.classList.toggle('active', ['now', 'members', 'archive'][i] === name);
+      });
+    }
+
+    /* Album art via iTunes Search API — no API key required */
+    var artTimer = null;
+    function fetchAlbumArt() {
+      clearTimeout(artTimer);
+      artTimer = setTimeout(function () {
+        var artist = document.getElementById('add-artist').value.trim();
+        var album  = document.getElementById('add-album').value.trim();
+        var preview = document.getElementById('art-preview');
+        if (!artist || !album) return;
+
+        var query = encodeURIComponent(artist + ' ' + album);
+        var url = 'https://itunes.apple.com/search?term=' + query + '&media=music&entity=album&limit=1';
+
+        fetch(url)
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.results && data.results.length > 0) {
+              /* Swap 100x100 thumbnail for 600x600 */
+              var art = data.results[0].artworkUrl100.replace('100x100', '600x600');
+              preview.innerHTML = '<img src="' + art + '" alt="Album art">';
+            }
+          })
+          .catch(function () { /* silent — art stays as placeholder */ });
+      }, 600); /* debounce 600ms */
+    }
+
+    /* Placeholder handlers — wire to real backend later */
+    function addAlbum() {
+      var artist = document.getElementById('add-artist').value.trim();
+      var album  = document.getElementById('add-album').value.trim();
+      if (!artist || !album) return;
+      alert('Placeholder: add "' + artist + ' — ' + album + '" to this episode (backend not yet connected).');
+    }
+
+    function requestJoin() {
+      alert('Placeholder: join request sent (backend not yet connected).');
+    }
+  </script>
+</body>
+</html>

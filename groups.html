@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Browse all Vinyl Night groups around the world.">
+  <title>Groups — Vinyl Night</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .groups-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+      flex-wrap: wrap;
+    }
+
+    .groups-toolbar input {
+      max-width: 300px;
+    }
+
+    .gathering-entry {
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border-subtle);
+      display: grid;
+      grid-template-columns: 5rem 1fr auto;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    .gathering-entry:last-child {
+      border-bottom: none;
+    }
+
+    .gathering-date {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+      padding-top: 0.2rem;
+    }
+
+    .gathering-albums {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .group-detail-header {
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    /* Record icon on group cards — stays circular (it's a record) */
+    .group-detail-record {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .group-detail-record::after {
+      content: '';
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      position: absolute;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">Vinyl<em>Night</em></a>
+      <ul class="nav-links">
+        <li><a href="about.html">About</a></li>
+        <li><a href="groups.html" class="active">Groups</a></li>
+        <li><a href="how-to-start.html">How to Start</a></li>
+        <li><a href="bylaws.html">Bylaws</a></li>
+        <li><a href="profile.html" class="nav-cta">Sign In</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+    <div class="container">
+
+      <header class="page-header">
+        <p class="label mb-2">The Community</p>
+        <h1>All Groups</h1>
+        <p class="text-muted mt-2" style="font-size: 0.95rem;">
+          Placeholder — a brief line about how many groups exist and an invitation to browse or start one.
+        </p>
+      </header>
+
+      <div class="page-content">
+
+        <!-- Search / filter bar -->
+        <div class="groups-toolbar">
+          <input type="text" placeholder="Search groups by name or city&hellip;" aria-label="Search groups">
+          <a href="how-to-start.html" class="btn btn-outline">+ Start a Group</a>
+        </div>
+
+        <!-- Group list -->
+        <div class="card-grid" style="margin-bottom: 4rem;">
+
+          <!-- Group Card 1 -->
+          <a href="group.html" class="card group-card" style="text-decoration: none;">
+            <div class="group-detail-header">
+              <div class="group-detail-record" aria-hidden="true"></div>
+              <div>
+                <p class="group-card-name">Placeholder Group Name</p>
+                <p class="group-card-location text-xs mt-1">City, Country</p>
+              </div>
+            </div>
+            <p class="text-muted text-sm mt-2">
+              Placeholder — a brief description of this group's character, taste, or gathering style.
+            </p>
+            <div class="gathering-albums mt-2">
+              <span class="tag">Genre / Focus</span>
+              <span class="tag">Genre / Focus</span>
+            </div>
+            <div class="group-card-footer">
+              <div class="meta-row">
+                <span class="meta-item"><strong>00</strong> members</span>
+                <span class="meta-item"><strong>00</strong> gatherings</span>
+              </div>
+              <span class="text-xs text-muted">Est. 0000</span>
+            </div>
+          </a>
+
+          <!-- Group Card 2 -->
+          <a href="group.html" class="card group-card" style="text-decoration: none;">
+            <div class="group-detail-header">
+              <div class="group-detail-record" aria-hidden="true"></div>
+              <div>
+                <p class="group-card-name">Placeholder Group Name</p>
+                <p class="group-card-location text-xs mt-1">City, Country</p>
+              </div>
+            </div>
+            <p class="text-muted text-sm mt-2">
+              Placeholder — a brief description of this group's character, taste, or gathering style.
+            </p>
+            <div class="gathering-albums mt-2">
+              <span class="tag">Genre / Focus</span>
+            </div>
+            <div class="group-card-footer">
+              <div class="meta-row">
+                <span class="meta-item"><strong>00</strong> members</span>
+                <span class="meta-item"><strong>00</strong> gatherings</span>
+              </div>
+              <span class="text-xs text-muted">Est. 0000</span>
+            </div>
+          </a>
+
+          <!-- Group Card 3 -->
+          <a href="group.html" class="card group-card" style="text-decoration: none;">
+            <div class="group-detail-header">
+              <div class="group-detail-record" aria-hidden="true"></div>
+              <div>
+                <p class="group-card-name">Placeholder Group Name</p>
+                <p class="group-card-location text-xs mt-1">City, Country</p>
+              </div>
+            </div>
+            <p class="text-muted text-sm mt-2">
+              Placeholder — a brief description of this group's character, taste, or gathering style.
+            </p>
+            <div class="gathering-albums mt-2">
+              <span class="tag">Genre / Focus</span>
+              <span class="tag">Genre / Focus</span>
+              <span class="tag">Genre / Focus</span>
+            </div>
+            <div class="group-card-footer">
+              <div class="meta-row">
+                <span class="meta-item"><strong>00</strong> members</span>
+                <span class="meta-item"><strong>00</strong> gatherings</span>
+              </div>
+              <span class="text-xs text-muted">Est. 0000</span>
+            </div>
+          </a>
+
+        </div>
+
+        <hr class="groove">
+
+        <!-- Sample Group Detail (expanded view) -->
+        <section>
+          <p class="label mb-2">Group Detail</p>
+          <h2 style="margin-bottom: 2rem;">Placeholder Group Name</h2>
+
+          <div style="display: grid; grid-template-columns: 1fr 320px; gap: 4rem; align-items: start;">
+            <div>
+              <!-- Recent Gatherings -->
+              <h3 style="margin-bottom: 1.25rem; font-family: 'Inter', sans-serif; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted);">Recent Gatherings</h3>
+
+              <div class="numbered-section">
+
+                <div class="gathering-entry">
+                  <span class="gathering-date">Month 00,<br>0000</span>
+                  <div>
+                    <p class="text-sm" style="color: var(--text); margin-bottom: 0.5rem;">Gathering #00 &mdash; Placeholder Host</p>
+                    <div class="gathering-albums">
+                      <span class="tag">Artist &mdash; <em>Album Title</em></span>
+                      <span class="tag">Artist &mdash; <em>Album Title</em></span>
+                    </div>
+                  </div>
+                  <span class="text-xs text-muted">00 attendees</span>
+                </div>
+
+                <div class="gathering-entry">
+                  <span class="gathering-date">Month 00,<br>0000</span>
+                  <div>
+                    <p class="text-sm" style="color: var(--text); margin-bottom: 0.5rem;">Gathering #00 &mdash; Placeholder Host</p>
+                    <div class="gathering-albums">
+                      <span class="tag">Artist &mdash; <em>Album Title</em></span>
+                    </div>
+                  </div>
+                  <span class="text-xs text-muted">00 attendees</span>
+                </div>
+
+                <div class="gathering-entry">
+                  <span class="gathering-date">Month 00,<br>0000</span>
+                  <div>
+                    <p class="text-sm" style="color: var(--text); margin-bottom: 0.5rem;">Gathering #00 &mdash; Placeholder Host</p>
+                    <div class="gathering-albums">
+                      <span class="tag">Artist &mdash; <em>Album Title</em></span>
+                      <span class="tag">Artist &mdash; <em>Album Title</em></span>
+                      <span class="tag">Artist &mdash; <em>Album Title</em></span>
+                    </div>
+                  </div>
+                  <span class="text-xs text-muted">00 attendees</span>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Group sidebar info -->
+            <aside class="card" style="position: sticky; top: calc(var(--nav-height) + 2rem);">
+              <p class="text-xs text-muted mb-1" style="letter-spacing: 0.1em; text-transform: uppercase;">Members</p>
+              <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+                <div class="flex items-center gap-2">
+                  <div class="avatar" style="width:36px; height:36px; font-size: 0.9rem;">P</div>
+                  <span class="text-sm">Placeholder Name</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="avatar" style="width:36px; height:36px; font-size: 0.9rem;">P</div>
+                  <span class="text-sm">Placeholder Name</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="avatar" style="width:36px; height:36px; font-size: 0.9rem;">P</div>
+                  <span class="text-sm">Placeholder Name</span>
+                </div>
+                <p class="text-xs text-muted">+ 00 more</p>
+              </div>
+              <a href="profile.html" class="btn btn-primary" style="width: 100%; justify-content: center;">Join this Group</a>
+            </aside>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="footer-logo">Vinyl<em style="font-style:italic; color: var(--accent-dim);">Night</em></span>
+      <nav class="footer-links">
+        <a href="about.html">About</a>
+        <a href="how-to-start.html">How to Start</a>
+        <a href="bylaws.html">Bylaws</a>
+      </nav>
+      <span class="footer-copy">&copy; 2025 VinylNight.net</span>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Your Vinyl Night profile — manage your account, favorite albums, and groups.">
+  <title>Profile — Vinyl Night</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Tab nav for View / Edit profile */
+    .profile-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 3rem;
+    }
+
+    .profile-tab {
+      padding: 0.75rem 1.5rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+    }
+
+    .profile-tab.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Sign-in / join panel */
+    .auth-panel {
+      max-width: 400px;
+      margin: 4rem auto;
+    }
+
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 1.5rem 0;
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .auth-divider::before,
+    .auth-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-subtle);
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">Vinyl<em>Night</em></a>
+      <ul class="nav-links">
+        <li><a href="about.html">About</a></li>
+        <li><a href="groups.html">Groups</a></li>
+        <li><a href="how-to-start.html">How to Start</a></li>
+        <li><a href="bylaws.html">Bylaws</a></li>
+        <li><a href="profile.html" class="nav-cta active">My Profile</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+    <div class="container">
+
+      <header class="page-header">
+        <p class="label mb-2">Account</p>
+        <h1>Profile</h1>
+      </header>
+
+      <div class="page-content">
+
+        <!-- ── Auth state: Not signed in ──────────────────────────── -->
+        <div class="auth-panel" id="auth-panel">
+          <h2 style="margin-bottom: 0.5rem;">Sign in</h2>
+          <p class="text-muted text-sm mb-4">Placeholder — a short line welcoming people to sign in or create an account.</p>
+
+          <form id="signin-form">
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+            </div>
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Sign In</button>
+          </form>
+
+          <div class="auth-divider">or</div>
+
+          <p class="text-sm text-muted" style="text-align: center;">
+            New here? <a href="#" onclick="signIn(); return false;">Create an account</a>
+          </p>
+        </div>
+
+        <!-- ── Signed-in state: Profile view + edit ───────────────── -->
+        <div id="profile-panel" style="display: none;">
+          <div class="profile-tabs">
+            <button class="profile-tab active" onclick="showTab('view')">View Profile</button>
+            <button class="profile-tab" onclick="showTab('edit')">Edit Profile</button>
+          </div>
+
+          <!-- VIEW TAB -->
+          <div class="tab-panel active" id="tab-view">
+            <div class="profile-layout">
+
+              <!-- Sidebar -->
+              <aside class="profile-sidebar">
+                <div class="avatar avatar-lg mb-3">P</div>
+                <p class="profile-name">Placeholder Username</p>
+                <p class="profile-bio">Placeholder — a short member bio or description. A couple of sentences about who they are and what they listen to.</p>
+                <a href="#" onclick="showTab('edit'); return false;" class="btn btn-outline" style="margin-top: 0.25rem; font-size: 0.75rem;">Edit Profile</a>
+
+                <hr class="groove" style="margin: 2rem 0;">
+
+                <p class="text-xs text-muted" style="letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1rem;">My Groups</p>
+                <div class="profile-groups-list">
+                  <div class="profile-group-item">
+                    <div class="avatar" style="width: 28px; height: 28px; font-size: 0.7rem; border-radius: 50%;">&#9675;</div>
+                    <a href="groups.html" class="text-sm" style="color: var(--text-muted);">Placeholder Group</a>
+                  </div>
+                  <div class="profile-group-item">
+                    <div class="avatar" style="width: 28px; height: 28px; font-size: 0.7rem; border-radius: 50%;">&#9675;</div>
+                    <a href="groups.html" class="text-sm" style="color: var(--text-muted);">Placeholder Group</a>
+                  </div>
+                  <a href="groups.html" class="text-xs text-muted mt-2" style="display: block;">+ Find more groups</a>
+                </div>
+              </aside>
+
+              <!-- Main: Favorite Albums -->
+              <div>
+                <p class="text-xs text-muted mb-3" style="letter-spacing: 0.12em; text-transform: uppercase;">5 Current Favorites</p>
+
+                <div class="albums-grid">
+
+                  <div class="album-sleeve">
+                    <span class="album-sleeve-number">01</span>
+                    <p class="album-sleeve-label">Artist Name</p>
+                    <p class="album-sleeve-title"><em>Album Title</em></p>
+                  </div>
+
+                  <div class="album-sleeve">
+                    <span class="album-sleeve-number">02</span>
+                    <p class="album-sleeve-label">Artist Name</p>
+                    <p class="album-sleeve-title"><em>Album Title</em></p>
+                  </div>
+
+                  <div class="album-sleeve">
+                    <span class="album-sleeve-number">03</span>
+                    <p class="album-sleeve-label">Artist Name</p>
+                    <p class="album-sleeve-title"><em>Album Title</em></p>
+                  </div>
+
+                  <div class="album-sleeve">
+                    <span class="album-sleeve-number">04</span>
+                    <p class="album-sleeve-label">Artist Name</p>
+                    <p class="album-sleeve-title"><em>Album Title</em></p>
+                  </div>
+
+                  <div class="album-sleeve">
+                    <span class="album-sleeve-number">05</span>
+                    <p class="album-sleeve-label">Artist Name</p>
+                    <p class="album-sleeve-title"><em>Album Title</em></p>
+                  </div>
+
+                </div>
+
+                <hr class="groove">
+
+                <!-- Group activity -->
+                <p class="text-xs text-muted mb-3" style="letter-spacing: 0.12em; text-transform: uppercase;">Recent Gatherings Attended</p>
+
+                <div style="display: flex; flex-direction: column; gap: 0;">
+                  <div style="display: grid; grid-template-columns: 5rem 1fr; gap: 1.5rem; padding: 1.25rem 0; border-bottom: 1px solid var(--border-subtle);">
+                    <span class="text-xs text-muted" style="font-family: 'Playfair Display', serif; padding-top: 0.2rem;">Month 00</span>
+                    <div>
+                      <p class="text-sm" style="color: var(--text);">Placeholder Group &mdash; Gathering #00</p>
+                      <p class="text-xs text-muted mt-1">Artist &mdash; <em>Album Title</em></p>
+                    </div>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 5rem 1fr; gap: 1.5rem; padding: 1.25rem 0; border-bottom: 1px solid var(--border-subtle);">
+                    <span class="text-xs text-muted" style="font-family: 'Playfair Display', serif; padding-top: 0.2rem;">Month 00</span>
+                    <div>
+                      <p class="text-sm" style="color: var(--text);">Placeholder Group &mdash; Gathering #00</p>
+                      <p class="text-xs text-muted mt-1">Artist &mdash; <em>Album Title</em></p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- EDIT TAB -->
+          <div class="tab-panel" id="tab-edit">
+            <div style="max-width: 600px;">
+
+              <form>
+                <!-- Avatar -->
+                <div class="form-group">
+                  <label>Avatar</label>
+                  <div class="avatar-upload">
+                    <div class="avatar avatar-lg" id="avatar-preview">P</div>
+                    <div>
+                      <label for="avatar-input" class="avatar-upload-trigger" style="display: inline-block; margin-bottom: 0.5rem;">
+                        Choose image&hellip;
+                      </label>
+                      <input type="file" id="avatar-input" accept="image/*" class="sr-only">
+                      <p class="form-hint">JPG or PNG. Max 2MB.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <hr class="groove" style="margin: 2rem 0;">
+
+                <!-- Username -->
+                <div class="form-group">
+                  <label for="username">Username</label>
+                  <input type="text" id="username" placeholder="your-username" maxlength="32" autocomplete="username">
+                  <p class="form-hint">Letters, numbers, and hyphens only. Max 32 characters.</p>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                  <label for="edit-email">Email</label>
+                  <input type="email" id="edit-email" placeholder="you@example.com" autocomplete="email">
+                </div>
+
+                <hr class="groove" style="margin: 2rem 0;">
+
+                <!-- Bio -->
+                <div class="form-group">
+                  <label for="bio">Short Description</label>
+                  <textarea id="bio" placeholder="A few sentences about yourself and your relationship to music&hellip;" maxlength="300"></textarea>
+                  <p class="form-hint">Max 300 characters.</p>
+                </div>
+
+                <hr class="groove" style="margin: 2rem 0;">
+
+                <!-- 5 Favorite Albums -->
+                <p class="text-xs text-muted mb-3" style="letter-spacing: 0.12em; text-transform: uppercase;">5 Current Favorite Albums</p>
+                <p class="form-hint mb-4">These can change. Pick what's on heavy rotation right now.</p>
+
+                <div id="favorite-albums">
+
+                  <div class="form-group" style="display: grid; grid-template-columns: 1.5rem 1fr 1fr; gap: 1rem; align-items: end;">
+                    <span class="text-xs text-muted" style="padding-bottom: 0.85rem; font-family: 'Playfair Display', serif;">01</span>
+                    <div>
+                      <label for="album-1-artist">Artist</label>
+                      <input type="text" id="album-1-artist" placeholder="Artist name">
+                    </div>
+                    <div>
+                      <label for="album-1-title">Album</label>
+                      <input type="text" id="album-1-title" placeholder="Album title">
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="display: grid; grid-template-columns: 1.5rem 1fr 1fr; gap: 1rem; align-items: end;">
+                    <span class="text-xs text-muted" style="padding-bottom: 0.85rem; font-family: 'Playfair Display', serif;">02</span>
+                    <div>
+                      <label for="album-2-artist">Artist</label>
+                      <input type="text" id="album-2-artist" placeholder="Artist name">
+                    </div>
+                    <div>
+                      <label for="album-2-title">Album</label>
+                      <input type="text" id="album-2-title" placeholder="Album title">
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="display: grid; grid-template-columns: 1.5rem 1fr 1fr; gap: 1rem; align-items: end;">
+                    <span class="text-xs text-muted" style="padding-bottom: 0.85rem; font-family: 'Playfair Display', serif;">03</span>
+                    <div>
+                      <label for="album-3-artist">Artist</label>
+                      <input type="text" id="album-3-artist" placeholder="Artist name">
+                    </div>
+                    <div>
+                      <label for="album-3-title">Album</label>
+                      <input type="text" id="album-3-title" placeholder="Album title">
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="display: grid; grid-template-columns: 1.5rem 1fr 1fr; gap: 1rem; align-items: end;">
+                    <span class="text-xs text-muted" style="padding-bottom: 0.85rem; font-family: 'Playfair Display', serif;">04</span>
+                    <div>
+                      <label for="album-4-artist">Artist</label>
+                      <input type="text" id="album-4-artist" placeholder="Artist name">
+                    </div>
+                    <div>
+                      <label for="album-4-title">Album</label>
+                      <input type="text" id="album-4-title" placeholder="Album title">
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="display: grid; grid-template-columns: 1.5rem 1fr 1fr; gap: 1rem; align-items: end;">
+                    <span class="text-xs text-muted" style="padding-bottom: 0.85rem; font-family: 'Playfair Display', serif;">05</span>
+                    <div>
+                      <label for="album-5-artist">Artist</label>
+                      <input type="text" id="album-5-artist" placeholder="Artist name">
+                    </div>
+                    <div>
+                      <label for="album-5-title">Album</label>
+                      <input type="text" id="album-5-title" placeholder="Album title">
+                    </div>
+                  </div>
+
+                </div>
+
+                <hr class="groove" style="margin: 2rem 0;">
+
+                <!-- Save -->
+                <div class="flex gap-2">
+                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                  <button type="button" class="btn btn-ghost" onclick="showTab('view')">Cancel</button>
+                </div>
+
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="footer-logo">Vinyl<em style="font-style:italic; color: var(--accent-dim);">Night</em></span>
+      <nav class="footer-links">
+        <a href="about.html">About</a>
+        <a href="how-to-start.html">How to Start</a>
+        <a href="bylaws.html">Bylaws</a>
+      </nav>
+      <span class="footer-copy">&copy; 2025 VinylNight.net</span>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    function signIn() {
+      document.getElementById('auth-panel').style.display = 'none';
+      document.getElementById('profile-panel').style.display = 'block';
+    }
+
+    document.getElementById('signin-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      signIn();
+    });
+
+    function showTab(name) {
+      document.querySelectorAll('.profile-tab').forEach(function (btn) {
+        btn.classList.toggle('active', btn.textContent.toLowerCase().includes(name === 'view' ? 'view' : 'edit'));
+      });
+      document.getElementById('tab-view').classList.toggle('active', name === 'view');
+      document.getElementById('tab-edit').classList.toggle('active', name === 'edit');
+    }
+  </script>
+</body>
+</html>
