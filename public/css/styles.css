@@ -1435,8 +1435,28 @@ textarea {
   flex-wrap: wrap;
   gap: 0.5rem 1.25rem;
   margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0;
 }
+
+.hero-actions {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.hero-notice {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.hero-notice strong {
+  color: var(--text);
+  font-weight: 400;
+}
+
+#invite-section { margin-bottom: 0; }
 
 .hero-member {
   display: flex;

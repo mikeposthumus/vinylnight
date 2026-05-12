@@ -460,10 +460,10 @@ async function handleGroupSearch(request, env, path, url) {
     JOIN seasons  s ON s.id = e.season_id
     JOIN users    u ON u.id = v.contributed_by
     WHERE s.group_id = ?
-      AND (LOWER(v.artist) LIKE ? OR LOWER(v.album_title) LIKE ?)
+      AND (LOWER(v.artist) LIKE ? OR LOWER(v.album_title) LIKE ? OR LOWER(u.username) LIKE ?)
     ORDER BY s.number DESC, e.number DESC
     LIMIT 30
-  `).bind(group.id, like, like).all();
+  `).bind(group.id, like, like, like).all();
 
   return json({ results: rows.results });
 }
