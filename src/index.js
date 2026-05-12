@@ -63,6 +63,7 @@ async function route(request, url, env) {
   if (path === '/api/groups'        && method === 'GET')  return handleListGroups(request, env);
   if (path === '/api/groups'        && method === 'POST') return handleCreateGroup(request, env);
   if (path.match(/^\/api\/groups\/[^/]+$/) && method === 'GET')    return handleGetGroup(request, env, path);
+  if (path.match(/^\/api\/groups\/[^/]+$/) && method === 'PUT')    return handleUpdateGroup(request, env, path);
   if (path.match(/^\/api\/groups\/[^/]+$/) && method === 'DELETE') return handleDeleteGroup(request, env, path);
   if (path.match(/^\/api\/groups\/[^/]+\/search$/)          && method === 'GET')  return handleGroupSearch(request, env, path, url);
   if (path.match(/^\/api\/groups\/[^/]+\/current-episode$/) && method === 'GET') return handleCurrentEpisode(request, env, path);
@@ -351,6 +352,39 @@ async function handleCreateGroup(request, env) {
   ).bind(seasonId, groupId, foundYear).run();
 
   return json({ slug }, 201);
+}
+
+async function handleUpdateGroup(request, env, path) {
+  const user = await requireAuth(request, env);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  const slug  = path.split('/').pop();
+  const group = await env.DB.prepare(
+    'SELECT id, name, location, description FROM groups WHERE slug = ?'
+  ).bind(slug).first();
+  if (!group) return json({ error: 'Group not found' }, 404);
+
+  const membership = await env.DB.prepare(
+    "SELECT role FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"
+  ).bind(group.id, user.id).first();
+  if (!membership || membership.role !== 'founder') {
+    return json({ error: 'Only founders can edit group details' }, 403);
+  }
+
+  const body = await parseBody(request);
+  const { name, location, description } = body ?? {};
+
+  const newName = name !== undefined ? (name || '').trim() : group.name;
+  if (!newName) return json({ error: 'name cannot be empty' }, 400);
+
+  const newLocation    = location    !== undefined ? (location    || '').trim() || null : group.location;
+  const newDescription = description !== undefined ? (description || '').trim() || null : group.description;
+
+  await env.DB.prepare(
+    'UPDATE groups SET name = ?, location = ?, description = ? WHERE id = ?'
+  ).bind(newName, newLocation, newDescription, group.id).run();
+
+  return json({ ok: true, name: newName, location: newLocation, description: newDescription });
 }
 
 async function handleDeleteGroup(request, env, path) {

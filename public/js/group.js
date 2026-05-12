@@ -753,15 +753,63 @@ async function executeDeleteEpisode(epId) {
   } catch(e) { alert('Could not delete episode.'); }
 }
 
+/* ── Edit group ─────────────────────────────────────────────── */
+function toggleGroupEditor() {
+  var editor = document.getElementById('group-editor');
+  var isOpen = editor.style.display !== 'none';
+  if (isOpen) {
+    editor.style.display = 'none';
+    cancelDeleteGroup();
+  } else {
+    var g = groupData.group;
+    document.getElementById('edit-group-name').value        = g.name        || '';
+    document.getElementById('edit-group-location').value    = g.location    || '';
+    document.getElementById('edit-group-description').value = g.description || '';
+    document.getElementById('edit-group-error').style.display = 'none';
+    editor.style.display = '';
+  }
+}
+
+async function saveGroupEdit() {
+  var errEl = document.getElementById('edit-group-error');
+  errEl.style.display = 'none';
+
+  var name        = document.getElementById('edit-group-name').value.trim();
+  var location    = document.getElementById('edit-group-location').value.trim();
+  var description = document.getElementById('edit-group-description').value.trim();
+
+  if (!name) { errEl.textContent = 'Name cannot be empty.'; errEl.style.display = ''; return; }
+
+  try {
+    var res  = await fetch('/api/groups/' + GROUP_SLUG, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, location: location || null, description: description || null }),
+    });
+    var data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || 'Could not save changes.'; errEl.style.display = ''; return; }
+
+    groupData.group.name        = data.name;
+    groupData.group.location    = data.location;
+    groupData.group.description = data.description;
+    renderHero();
+    toggleGroupEditor();
+  } catch (e) {
+    errEl.textContent = 'Could not save changes.'; errEl.style.display = '';
+  }
+}
+
 /* ── Delete group ───────────────────────────────────────────── */
 function showDeleteGroupConfirm() {
   document.getElementById('delete-group-confirm').style.display = '';
 }
 function cancelDeleteGroup() {
-  document.getElementById('delete-group-confirm').style.display = 'none';
-  document.getElementById('delete-group-input').value = '';
+  var confirm = document.getElementById('delete-group-confirm');
+  if (confirm) confirm.style.display = 'none';
+  var inp = document.getElementById('delete-group-input');
+  if (inp) inp.value = '';
   var btn = document.getElementById('delete-group-btn');
-  btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed';
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed'; }
 }
 function checkDeleteGroupInput() {
   var inp = document.getElementById('delete-group-input');

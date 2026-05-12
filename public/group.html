@@ -128,19 +128,43 @@
 
         <div id="this-season-wrap"></div>
 
-        <!-- Danger zone — founders only -->
+        <!-- Edit group / Danger zone — founders only -->
         <div id="danger-section" style="display:none; margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border-subtle);">
-          <p class="label mb-2" style="color:var(--accent-bright);">Danger Zone</p>
-          <button class="btn btn-ghost" style="font-size:0.78rem;color:var(--accent-bright);border-color:var(--accent-bright);" onclick="showDeleteGroupConfirm()">Delete Group</button>
-          <div id="delete-group-confirm" style="display:none; margin-top:1rem; max-width:480px;">
-            <p class="text-sm" style="color:var(--text-muted); margin-bottom:0.75rem; line-height:1.7;">
-              This will permanently delete this group, all seasons, all episodes, and every album record.
-              <strong>There is no undo.</strong> Type <strong>delete</strong> to confirm.
-            </p>
-            <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
-              <input type="text" id="delete-group-input" placeholder="delete" style="width:130px;" oninput="checkDeleteGroupInput()">
-              <button id="delete-group-btn" class="btn" style="font-size:0.78rem;background:var(--accent-bright);color:#fff;border-color:var(--accent-bright);opacity:0.4;cursor:not-allowed;" disabled onclick="executeDeleteGroup()">Delete Forever</button>
-              <button class="btn btn-ghost" style="font-size:0.78rem;" onclick="cancelDeleteGroup()">Cancel</button>
+          <button class="btn btn-outline" style="font-size:0.78rem;" onclick="toggleGroupEditor()">Edit Group</button>
+
+          <div id="group-editor" style="display:none; margin-top:1.5rem; max-width:540px;">
+            <div class="form-group">
+              <label for="edit-group-name">Name</label>
+              <input type="text" id="edit-group-name">
+            </div>
+            <div class="form-group">
+              <label for="edit-group-location">Location</label>
+              <input type="text" id="edit-group-location" placeholder="City, Country">
+            </div>
+            <div class="form-group">
+              <label for="edit-group-description">Description</label>
+              <textarea id="edit-group-description" rows="3" style="resize:vertical;"></textarea>
+            </div>
+            <div id="edit-group-error" class="form-hint" style="display:none; color:var(--accent-bright); margin-bottom:1rem;"></div>
+            <div style="display:flex;gap:0.75rem; margin-bottom:2rem;">
+              <button class="btn btn-primary" style="font-size:0.78rem;" onclick="saveGroupEdit()">Save changes</button>
+              <button class="btn btn-ghost"   style="font-size:0.78rem;" onclick="toggleGroupEditor()">Cancel</button>
+            </div>
+
+            <div style="padding-top:1.5rem; border-top:1px solid var(--border-subtle);">
+              <p class="label mb-2" style="color:var(--accent-bright);">Danger Zone</p>
+              <button class="btn btn-ghost" style="font-size:0.78rem;color:var(--accent-bright);border-color:var(--accent-bright);" onclick="showDeleteGroupConfirm()">Delete Group</button>
+              <div id="delete-group-confirm" style="display:none; margin-top:1rem;">
+                <p class="text-sm" style="color:var(--text-muted); margin-bottom:0.75rem; line-height:1.7;">
+                  This will permanently delete this group, all seasons, all episodes, and every album record.
+                  <strong>There is no undo.</strong> Type <strong>delete</strong> to confirm.
+                </p>
+                <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+                  <input type="text" id="delete-group-input" placeholder="delete" style="width:130px;" oninput="checkDeleteGroupInput()">
+                  <button id="delete-group-btn" class="btn" style="font-size:0.78rem;background:var(--accent-bright);color:#fff;border-color:var(--accent-bright);opacity:0.4;cursor:not-allowed;" disabled onclick="executeDeleteGroup()">Delete Forever</button>
+                  <button class="btn btn-ghost" style="font-size:0.78rem;" onclick="cancelDeleteGroup()">Cancel</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
