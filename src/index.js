@@ -51,6 +51,7 @@ async function route(request, url, env) {
   if (path === '/api/groups'        && method === 'POST') return handleCreateGroup(request, env);
   if (path.match(/^\/api\/groups\/[^/]+$/) && method === 'GET')    return handleGetGroup(request, env, path);
   if (path.match(/^\/api\/groups\/[^/]+$/) && method === 'DELETE') return handleDeleteGroup(request, env, path);
+  if (path.match(/^\/api\/groups\/[^/]+\/search$/)          && method === 'GET')  return handleGroupSearch(request, env, path, url);
   if (path.match(/^\/api\/groups\/[^/]+\/current-episode$/) && method === 'GET') return handleCurrentEpisode(request, env, path);
   if (path.match(/^\/api\/groups\/[^/]+\/invite$/) && method === 'POST') return handleInvite(request, env, path);
 
@@ -438,6 +439,33 @@ async function handleGetGroup(request, env, path) {
     seasons:     seasons.results,
     vinyl_count: vinylRow?.count || 0,
   });
+}
+
+async function handleGroupSearch(request, env, path, url) {
+  const slug = path.split('/')[3];
+  const q    = (url.searchParams.get('q') || '').trim();
+  if (!q) return json({ results: [] });
+
+  const group = await env.DB.prepare('SELECT id FROM groups WHERE slug = ?').bind(slug).first();
+  if (!group) return json({ error: 'Group not found' }, 404);
+
+  const like = '%' + q.toLowerCase() + '%';
+
+  const rows = await env.DB.prepare(`
+    SELECT v.artist, v.album_title, v.art_url,
+           s.number AS season_number, e.number AS episode_number,
+           u.username AS contributor_username
+    FROM episode_vinyls v
+    JOIN episodes e ON e.id = v.episode_id
+    JOIN seasons  s ON s.id = e.season_id
+    JOIN users    u ON u.id = v.contributed_by
+    WHERE s.group_id = ?
+      AND (LOWER(v.artist) LIKE ? OR LOWER(v.album_title) LIKE ?)
+    ORDER BY s.number DESC, e.number DESC
+    LIMIT 30
+  `).bind(group.id, like, like).all();
+
+  return json({ results: rows.results });
 }
 
 // ── Episodes & Vinyls ─────────────────────────────────────────────────

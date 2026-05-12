@@ -70,6 +70,18 @@
       </div>
     </div>
 
+    <!-- ── Vinyl Search ─────────────────────────────────────────── -->
+    <div class="container" style="padding-top: 2rem; padding-bottom: 0;">
+      <div class="vinyl-search">
+        <p class="label mb-2">Search the vinyl library</p>
+        <div class="vinyl-search-bar">
+          <input type="text" id="vinyl-search-input" placeholder="Search by artist or album&hellip;" autocomplete="off" oninput="onVinylSearch(this.value)">
+          <button class="vinyl-search-clear" id="vinyl-search-clear" onclick="clearVinylSearch()" aria-label="Clear search">&times;</button>
+        </div>
+        <div id="vinyl-search-results" style="display:none;"></div>
+      </div>
+    </div>
+
     <!-- ── Tabs ───────────────────────────────────────────────────── -->
     <div class="container" style="padding-top: 2.5rem;">
 

@@ -906,6 +906,72 @@ async function fetchSleeveArt(sleeve) {
   }
 }
 
+/* ── Vinyl Search ───────────────────────────────────────────── */
+var searchTimer = null;
+
+function onVinylSearch(value) {
+  var clearBtn = document.getElementById('vinyl-search-clear');
+  if (clearBtn) clearBtn.style.display = value ? '' : 'none';
+
+  clearTimeout(searchTimer);
+  var q = value.trim();
+  if (!q) {
+    var resultsEl = document.getElementById('vinyl-search-results');
+    if (resultsEl) { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; }
+    return;
+  }
+  searchTimer = setTimeout(function() { runVinylSearch(q); }, 350);
+}
+
+async function runVinylSearch(q) {
+  var resultsEl = document.getElementById('vinyl-search-results');
+  if (!resultsEl) return;
+  resultsEl.style.display = '';
+  resultsEl.innerHTML = '<p class="search-empty">Searching&hellip;</p>';
+
+  try {
+    var res  = await fetch('/api/groups/' + GROUP_SLUG + '/search?q=' + encodeURIComponent(q));
+    var data = await res.json();
+    var hits = data.results || [];
+
+    if (!hits.length) {
+      resultsEl.innerHTML = '<p class="search-empty">No results for &ldquo;' + esc(q) + '&rdquo;</p>';
+      return;
+    }
+
+    resultsEl.innerHTML =
+      '<div class="search-results">' +
+      hits.map(function(v) {
+        var artHtml = v.art_url
+          ? '<img src="' + esc(v.art_url) + '" alt="' + esc(v.artist) + '">'
+          : '<div class="search-result-art-placeholder"></div>';
+        return '<div class="search-result">' +
+          '<div class="search-result-art">' + artHtml + '</div>' +
+          '<div class="search-result-info">' +
+            '<div class="search-result-album"><em>' + esc(v.album_title) + '</em></div>' +
+            '<div class="search-result-artist">' + esc(v.artist) + '</div>' +
+            '<div class="search-result-meta">' +
+              'S' + esc(v.season_number) + ' &middot; Ep ' + esc(v.episode_number) +
+              (v.contributor_username ? ' &middot; ' + esc(v.contributor_username) : '') +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('') +
+      '</div>';
+  } catch(e) {
+    resultsEl.innerHTML = '<p class="search-empty">Could not load results.</p>';
+  }
+}
+
+function clearVinylSearch() {
+  var inp = document.getElementById('vinyl-search-input');
+  if (inp) { inp.value = ''; inp.focus(); }
+  var clearBtn = document.getElementById('vinyl-search-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  var resultsEl = document.getElementById('vinyl-search-results');
+  if (resultsEl) { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; }
+}
+
 /* ── Helpers ────────────────────────────────────────────────── */
 function albumSleeveHtml(artist, album, contributor, artUrl, vinylId) {
   var imgHtml = artUrl
