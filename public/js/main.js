@@ -55,6 +55,19 @@
     });
   }
 
+  // In-memory deduplication: avoids duplicate /api/artwork requests for the same album on one page.
+  var artworkRequests = {};
+
+  function fetchArtwork(artist, album) {
+    var key = artist + '\x00' + album;
+    if (!artworkRequests[key]) {
+      artworkRequests[key] = fetch(
+        '/api/artwork?artist=' + encodeURIComponent(artist) + '&album=' + encodeURIComponent(album)
+      ).then(function (r) { return r.json(); }).catch(function () { return { imageUrl: null }; });
+    }
+    return artworkRequests[key];
+  }
+
   // Auto-load album art for any .album-sleeve[data-artist] on the page
   function loadAlbumArt() {
     document.querySelectorAll('.album-sleeve[data-artist]').forEach(function (sleeve) {
@@ -62,31 +75,24 @@
       var album  = sleeve.getAttribute('data-album');
       if (!artist || !album) return;
 
-      var query = encodeURIComponent(artist + ' ' + album);
-      fetch('https://itunes.apple.com/search?term=' + query + '&media=music&entity=album&limit=1')
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          if (!data.results || !data.results.length) return;
-          var artUrl = data.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
-          var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
-          var img = document.createElement('img');
-          img.className = 'album-sleeve-art';
-          img.alt = album + ' by ' + artist;
-          // Insert after placeholder so art (z-index:1) is above it in both DOM order and z-index
-          if (placeholder) {
-            placeholder.insertAdjacentElement('afterend', img);
-          } else {
-            sleeve.insertBefore(img, sleeve.firstChild);
-          }
-          img.addEventListener('load', function () {
-            if (placeholder) placeholder.style.display = 'none';
-          });
-          img.addEventListener('error', function () {
-            img.remove();
-          });
-          img.src = artUrl;
-        })
-        .catch(function () { /* fetch failed — placeholder stays */ });
+      fetchArtwork(artist, album).then(function (data) {
+        var artUrl = data.thumbnailUrl || data.imageUrl;
+        if (!artUrl) return;
+        var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
+        var img = document.createElement('img');
+        img.className = 'album-sleeve-art';
+        img.alt = album + ' by ' + artist;
+        if (placeholder) {
+          placeholder.insertAdjacentElement('afterend', img);
+        } else {
+          sleeve.insertBefore(img, sleeve.firstChild);
+        }
+        img.addEventListener('load', function () {
+          if (placeholder) placeholder.style.display = 'none';
+        });
+        img.addEventListener('error', function () { img.remove(); });
+        img.src = artUrl;
+      });
     });
   }
 

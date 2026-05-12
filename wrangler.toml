@@ -19,3 +19,4 @@ database_id = "5ea0f19b-dd09-494b-a601-0109953b55ce"
 
 [vars]
 ENVIRONMENT = "development"
+MUSICBRAINZ_USER_AGENT = "vinylnight/1.0 (https://vinylnight.net)"

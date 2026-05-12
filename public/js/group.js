@@ -249,7 +249,17 @@ function renderNowPlaying(season, episodes, vinyls) {
             '<button type="button" class="btn btn-primary" onclick="addAlbum()">Add</button>' +
           '</div>' +
         '</div>' +
-        '<p class="form-hint mt-2">Art is fetched automatically from the iTunes catalog as you type.</p>' +
+        '<div style="display:flex;align-items:center;gap:1rem;margin-top:0.5rem;flex-wrap:wrap;">' +
+          '<p class="form-hint" style="margin:0;">Art is fetched automatically as you type.</p>' +
+          '<button id="art-change-cover" type="button" class="btn btn-ghost" style="display:none;font-size:0.75rem;padding:0.2rem 0.6rem;" onclick="openArtUrlInput()">Change cover</button>' +
+        '</div>' +
+        '<div id="art-url-input-wrap" style="display:none;margin-top:0.5rem;max-width:480px;">' +
+          '<div style="display:flex;gap:0.5rem;align-items:center;">' +
+            '<input type="url" id="art-url-input" placeholder="Paste image URL" style="flex:1;margin:0;font-size:0.85rem;">' +
+            '<button type="button" class="btn btn-primary" style="font-size:0.78rem;" onclick="applyPastedArt()">Apply</button>' +
+            '<button type="button" class="btn btn-ghost"  style="font-size:0.78rem;" onclick="cancelArtUrlInput()">Cancel</button>' +
+          '</div>' +
+        '</div>' +
       '</div>' +
     '</div>';
 
@@ -769,8 +779,11 @@ async function executeDeleteGroup() {
   } catch(e) { alert('Could not delete group.'); }
 }
 
-/* ── Album art (iTunes) ─────────────────────────────────────── */
-var artTimer = null;
+/* ── Album art ──────────────────────────────────────────────── */
+var artTimer      = null;
+var artLastArtist = '';
+var artLastAlbum  = '';
+
 function fetchAlbumArt() {
   clearTimeout(artTimer);
   var artist  = (document.getElementById('add-artist')      || {}).value || '';
@@ -778,33 +791,72 @@ function fetchAlbumArt() {
   var preview = document.getElementById('art-preview');
   if (!preview) return;
   artist = artist.trim(); album = album.trim();
-  if (!artist || !album) { preview.innerHTML = '<div class="art-preview-icon"></div>'; return; }
+  if (!artist || !album) { setArtPreviewEmpty(preview); return; }
+  if (artist === artLastArtist && album === artLastAlbum) return;
   artTimer = setTimeout(function() {
+    if (artist === artLastArtist && album === artLastAlbum) return;
+    artLastArtist = artist; artLastAlbum = album;
     preview.classList.add('loading');
     preview.innerHTML = '';
-    fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + album) + '&media=music&entity=album&limit=5')
+    fetch('/api/artwork?artist=' + encodeURIComponent(artist) + '&album=' + encodeURIComponent(album))
       .then(function(r) { return r.json(); })
       .then(function(data) {
         preview.classList.remove('loading');
-        if (data.results && data.results.length) {
-          var target = album.toLowerCase();
-          var best = data.results.find(function(r) {
-            return (r.collectionName || '').toLowerCase() === target;
-          }) || data.results.find(function(r) {
-            return (r.collectionName || '').toLowerCase().indexOf(target) !== -1;
-          }) || data.results[0];
-          var art = best.artworkUrl100.replace('100x100bb', '600x600bb');
-          preview.innerHTML = '<img src="' + art + '" alt="Album art">';
-          preview.dataset.artUrl = art;
+        var imgUrl  = data.thumbnailUrl || data.imageUrl;
+        var fullUrl = data.imageUrl     || data.thumbnailUrl;
+        if (imgUrl) {
+          preview.innerHTML = '<img src="' + esc(imgUrl) + '" alt="Album art">';
+          preview.dataset.artUrl = fullUrl;
+          showChangeCoverBtn(data.confidence);
         } else {
-          preview.innerHTML = '<div class="art-preview-icon"></div>';
-          delete preview.dataset.artUrl;
+          setArtPreviewEmpty(preview);
         }
       }).catch(function() {
         preview.classList.remove('loading');
-        preview.innerHTML = '<div class="art-preview-icon"></div>';
+        setArtPreviewEmpty(preview);
       });
   }, 600);
+}
+
+function setArtPreviewEmpty(preview) {
+  preview.innerHTML = '<div class="art-preview-icon"></div>';
+  delete preview.dataset.artUrl;
+  var btn = document.getElementById('art-change-cover');
+  if (btn) btn.style.display = 'none';
+  var urlWrap = document.getElementById('art-url-input-wrap');
+  if (urlWrap) urlWrap.style.display = 'none';
+}
+
+function showChangeCoverBtn(confidence) {
+  var btn = document.getElementById('art-change-cover');
+  if (!btn) return;
+  btn.textContent = confidence === 'medium' ? 'Wrong cover?' : 'Change cover';
+  btn.style.display = '';
+}
+
+function openArtUrlInput() {
+  var wrap = document.getElementById('art-url-input-wrap');
+  if (wrap) { wrap.style.display = ''; document.getElementById('art-url-input').focus(); }
+}
+
+function cancelArtUrlInput() {
+  var wrap  = document.getElementById('art-url-input-wrap');
+  var input = document.getElementById('art-url-input');
+  if (wrap)  wrap.style.display = 'none';
+  if (input) input.value = '';
+}
+
+function applyPastedArt() {
+  var input   = document.getElementById('art-url-input');
+  var preview = document.getElementById('art-preview');
+  if (!input || !preview) return;
+  var url = input.value.trim();
+  if (url) {
+    preview.innerHTML = '<img src="' + esc(url) + '" alt="Album art">';
+    preview.dataset.artUrl = url;
+    artLastArtist = ''; artLastAlbum = '';
+  }
+  cancelArtUrlInput();
 }
 
 async function addAlbum() {
@@ -905,7 +957,7 @@ function switchTab(name) {
   });
 }
 
-/* ── Album art — click-to-load ───────────────────────────────── */
+/* ── Album art — click-to-load / re-fetch ────────────────────── */
 async function fetchSleeveArt(sleeve) {
   var vinylId = sleeve.dataset.vinylId;
   if (!vinylId || sleeve.dataset.artLoading) return;
@@ -914,16 +966,18 @@ async function fetchSleeveArt(sleeve) {
   try {
     var res  = await fetch('/api/vinyls/' + vinylId + '/art', { method: 'POST' });
     var data = await res.json();
-    if (!data.art_url) { sleeve.style.cursor = 'default'; return; }
-    var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
-    if (!placeholder) return;
+    if (!data.art_url) { sleeve.style.cursor = 'default'; delete sleeve.dataset.artLoading; return; }
+    var imgContainer = sleeve.querySelector('.album-sleeve-image');
+    if (!imgContainer) { sleeve.style.cursor = 'default'; return; }
     var img = document.createElement('img');
-    img.src = data.art_url;
-    img.alt = (sleeve.dataset.artist || '') + ' — ' + (sleeve.dataset.album || '');
+    img.src     = data.art_url;
+    img.alt     = (sleeve.dataset.artist || '') + ' — ' + (sleeve.dataset.album || '');
     img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-    placeholder.replaceWith(img);
+    imgContainer.innerHTML = '';
+    imgContainer.appendChild(img);
     sleeve.style.cursor = 'default';
     sleeve.onclick = null;
+    delete sleeve.dataset.artLoading;
   } catch(e) {
     sleeve.style.cursor = 'pointer';
     delete sleeve.dataset.artLoading;
@@ -1099,7 +1153,10 @@ function albumSleeveHtml(artist, album, contributor, artUrl, vinylId, playOrder,
   var extra = (clickable ? ' onclick="fetchSleeveArt(this)" style="cursor:pointer;" title="Click to load art"' : '') +
               (vinylId   ? ' data-vinyl-id="' + esc(vinylId) + '"' : '');
   var delBtn = (canDelete && vinylId)
-    ? '<button class="vinyl-del-btn" style="display:none;" onclick="deleteVinyl(\'' + esc(vinylId) + '\', this)" title="Remove album">Remove</button>'
+    ? '<button class="vinyl-del-btn" onclick="deleteVinyl(\'' + esc(vinylId) + '\', this)" title="Remove album">Remove</button>'
+    : '';
+  var changeArtBtn = (canDelete && vinylId)
+    ? '<button class="vinyl-change-art-btn" onclick="fetchSleeveArt(this.closest(\'.album-sleeve\'))" title="Re-fetch cover art">Change cover</button>'
     : '';
   var rightMeta = (playOrder || contributor)
     ? '<div class="album-sleeve-meta-right">' +
@@ -1118,6 +1175,7 @@ function albumSleeveHtml(artist, album, contributor, artUrl, vinylId, playOrder,
         rightMeta +
       '</div>' +
       delBtn +
+      changeArtBtn +
     '</div>' +
   '</div>';
 }

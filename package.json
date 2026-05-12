@@ -2,11 +2,14 @@
   "name": "vinylnight",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "wrangler pages dev . --port 8787",
-    "deploy": "wrangler pages deploy ."
+    "deploy": "wrangler pages deploy .",
+    "test": "vitest run"
   },
   "devDependencies": {
+    "vitest": "^2.0.0",
     "wrangler": "^4.90.0"
   }
 }

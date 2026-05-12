@@ -3,6 +3,8 @@
  * Handles auth and data routes. Static assets are served via the [assets] binding.
  */
 
+import { getAlbumArtwork, normalizeAlbumText } from './album-art.js';
+
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -82,6 +84,8 @@ async function route(request, url, env) {
 
   if (path.match(/^\/api\/vinyls\/[^/]+$/)                 && method === 'DELETE') return handleDeleteVinyl(request, env, path);
   if (path.match(/^\/api\/vinyls\/[^/]+\/art$/)           && method === 'POST') return handleFetchVinylArt(request, env, path);
+
+  if (path === '/api/artwork'                              && method === 'GET')  return handleArtworkLookup(request, env, url);
 
   return json({ error: 'Not found' }, 404);
 }
@@ -816,24 +820,25 @@ async function handleFetchVinylArt(request, env, path) {
   if (!vinyl) return json({ error: 'Not found' }, 404);
   if (vinyl.art_url) return json({ art_url: vinyl.art_url });
 
-  const term = encodeURIComponent(vinyl.artist + ' ' + vinyl.album_title);
-  let artUrl = null;
-  try {
-    const res  = await fetch(`https://itunes.apple.com/search?term=${term}&media=music&entity=album&limit=5`);
-    const data = await res.json();
-    if (data.results && data.results.length) {
-      const target = vinyl.album_title.toLowerCase();
-      const best = data.results.find(r => (r.collectionName || '').toLowerCase() === target)
-        || data.results.find(r => (r.collectionName || '').toLowerCase().includes(target))
-        || data.results[0];
-      artUrl = best.artworkUrl100.replace('100x100bb', '600x600bb');
-    }
-  } catch {}
+  const result = await getAlbumArtwork({ artist: vinyl.artist, album: vinyl.album_title }, env);
+  const artUrl = result.imageUrl ?? null;
 
   if (artUrl) {
     await env.DB.prepare('UPDATE episode_vinyls SET art_url = ? WHERE id = ?').bind(artUrl, vinylId).run();
   }
   return json({ art_url: artUrl });
+}
+
+async function handleArtworkLookup(request, env, url) {
+  const artist = (url.searchParams.get('artist') || '').trim();
+  const album  = (url.searchParams.get('album')  || '').trim();
+
+  if (!artist || !album) {
+    return json({ imageUrl: null, source: 'none', confidence: 'none' });
+  }
+
+  const result = await getAlbumArtwork({ artist, album }, env);
+  return json(result);
 }
 
 async function handleInvite(request, env, path) {

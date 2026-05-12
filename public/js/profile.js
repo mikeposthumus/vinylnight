@@ -293,24 +293,30 @@ function appendVinyls(vinyls) {
   loadArt(vinylsEl);
 }
 
+var profileArtRequests = {};
+
 function loadArt(container) {
   container.querySelectorAll('.album-sleeve[data-artist]').forEach(function(sleeve) {
     if (sleeve.querySelector('img') || sleeve.dataset.artLoading) return;
     sleeve.dataset.artLoading = '1';
     var artist = sleeve.dataset.artist;
     var album  = sleeve.dataset.album;
-    fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + album) + '&media=music&entity=album&limit=1')
-      .then(function(r) { return r.json(); })
-      .then(function(d) {
-        if (!d.results || !d.results.length) return;
-        var art = d.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
-        var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
-        if (!placeholder) return;
-        var img = document.createElement('img');
-        img.src = art; img.alt = artist + ' — ' + album;
-        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-        placeholder.replaceWith(img);
-      }).catch(function() {});
+    var key    = artist + '\x00' + album;
+    if (!profileArtRequests[key]) {
+      profileArtRequests[key] = fetch(
+        '/api/artwork?artist=' + encodeURIComponent(artist) + '&album=' + encodeURIComponent(album)
+      ).then(function(r) { return r.json(); }).catch(function() { return { imageUrl: null }; });
+    }
+    profileArtRequests[key].then(function(data) {
+      var artUrl = data.thumbnailUrl || data.imageUrl;
+      if (!artUrl) return;
+      var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
+      if (!placeholder) return;
+      var img = document.createElement('img');
+      img.src = artUrl; img.alt = artist + ' — ' + album;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+      placeholder.replaceWith(img);
+    });
   });
 }
 

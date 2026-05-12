@@ -529,7 +529,8 @@ ul { list-style: none; }
   margin-top: 0.1rem;
 }
 
-.vinyl-del-btn {
+.vinyl-del-btn,
+.vinyl-change-art-btn {
   background: none;
   border: none;
   padding: 0;
@@ -540,8 +541,12 @@ ul { list-style: none; }
   letter-spacing: 0.05em;
   text-align: left;
   transition: color 0.15s;
+  display: none;
 }
-.vinyl-del-btn:hover { color: var(--accent-bright); }
+.album-sleeve:hover .vinyl-del-btn,
+.album-sleeve:hover .vinyl-change-art-btn { display: block; }
+.vinyl-del-btn:hover        { color: var(--accent-bright); }
+.vinyl-change-art-btn:hover { color: var(--text-muted); }
 
 /* ── Forms ──────────────────────────────────────────────────── */
 
