@@ -1673,6 +1673,46 @@ textarea {
   color: var(--text-muted);
 }
 
+.search-sort-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-bottom: none;
+  background: var(--surface);
+  flex-wrap: wrap;
+}
+
+.search-sort-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  margin-right: 0.35rem;
+}
+
+.search-sort-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding: 0.2rem 0.6rem;
+  font-family: 'Inter', sans-serif;
+  transition: color 0.12s;
+  line-height: 1.6;
+}
+
+.search-sort-btn:hover { color: var(--text); }
+
+.search-sort-btn.active {
+  color: var(--text);
+  border-bottom: 1px solid var(--accent);
+}
+
 @media (max-width: 768px) {
   .group-hero-inner { grid-template-columns: 1fr; gap: 1.5rem; align-items: start; }
   .group-stats { flex-wrap: wrap; }

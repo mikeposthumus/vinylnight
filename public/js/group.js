@@ -907,7 +907,17 @@ async function fetchSleeveArt(sleeve) {
 }
 
 /* ── Vinyl Search ───────────────────────────────────────────── */
-var searchTimer = null;
+var searchTimer   = null;
+var searchResults = [];
+var sortField     = 'season_number';
+var sortDir       = 'desc';
+
+var SORT_COLS = [
+  { field: 'album_title',         label: 'Album' },
+  { field: 'artist',              label: 'Artist' },
+  { field: 'season_number',       label: 'Season' },
+  { field: 'contributor_username', label: 'Contributor' },
+];
 
 function onVinylSearch(value) {
   var clearBtn = document.getElementById('vinyl-search-clear');
@@ -916,6 +926,7 @@ function onVinylSearch(value) {
   clearTimeout(searchTimer);
   var q = value.trim();
   if (!q) {
+    searchResults = [];
     var resultsEl = document.getElementById('vinyl-search-results');
     if (resultsEl) { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; }
     return;
@@ -932,35 +943,80 @@ async function runVinylSearch(q) {
   try {
     var res  = await fetch('/api/groups/' + GROUP_SLUG + '/search?q=' + encodeURIComponent(q));
     var data = await res.json();
-    var hits = data.results || [];
+    searchResults = data.results || [];
 
-    if (!hits.length) {
+    if (!searchResults.length) {
       resultsEl.innerHTML = '<p class="search-empty">No results for &ldquo;' + esc(q) + '&rdquo;</p>';
       return;
     }
 
-    resultsEl.innerHTML =
-      '<div class="search-results">' +
-      hits.map(function(v) {
-        var artHtml = v.art_url
-          ? '<img src="' + esc(v.art_url) + '" alt="' + esc(v.artist) + '">'
-          : '<div class="search-result-art-placeholder"></div>';
-        return '<div class="search-result">' +
-          '<div class="search-result-art">' + artHtml + '</div>' +
-          '<div class="search-result-info">' +
-            '<div class="search-result-album"><em>' + esc(v.album_title) + '</em></div>' +
-            '<div class="search-result-artist">' + esc(v.artist) + '</div>' +
-            '<div class="search-result-meta">' +
-              'S' + esc(v.season_number) + ' &middot; Ep ' + esc(v.episode_number) +
-              (v.contributor_username ? ' &middot; ' + esc(v.contributor_username) : '') +
-            '</div>' +
-          '</div>' +
-        '</div>';
-      }).join('') +
-      '</div>';
+    renderSearchResults();
   } catch(e) {
     resultsEl.innerHTML = '<p class="search-empty">Could not load results.</p>';
   }
+}
+
+function setSearchSort(field) {
+  if (sortField === field) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortField = field;
+    sortDir   = 'asc';
+  }
+  renderSearchResults();
+}
+
+function renderSearchResults() {
+  var resultsEl = document.getElementById('vinyl-search-results');
+  if (!resultsEl || !searchResults.length) return;
+
+  var sorted = searchResults.slice().sort(function(a, b) {
+    var av, bv;
+    if (sortField === 'season_number') {
+      /* secondary sort by episode within a season */
+      av = (a.season_number || 0) * 1000 + (a.episode_number || 0);
+      bv = (b.season_number || 0) * 1000 + (b.episode_number || 0);
+    } else {
+      av = String(a[sortField] || '').toLowerCase();
+      bv = String(b[sortField] || '').toLowerCase();
+    }
+    if (av < bv) return sortDir === 'asc' ? -1 : 1;
+    if (av > bv) return sortDir === 'asc' ? 1  : -1;
+    return 0;
+  });
+
+  var arrow = sortDir === 'asc' ? ' &#8593;' : ' &#8595;';
+
+  var sortBar =
+    '<div class="search-sort-bar">' +
+      '<span class="search-sort-label">Sort</span>' +
+      SORT_COLS.map(function(c) {
+        var active = sortField === c.field;
+        return '<button class="search-sort-btn' + (active ? ' active' : '') + '"' +
+          ' onclick="setSearchSort(\'' + c.field + '\')">' +
+          c.label + (active ? arrow : '') +
+        '</button>';
+      }).join('') +
+    '</div>';
+
+  var rows = sorted.map(function(v) {
+    var artHtml = v.art_url
+      ? '<img src="' + esc(v.art_url) + '" alt="' + esc(v.artist) + '">'
+      : '<div class="search-result-art-placeholder"></div>';
+    return '<div class="search-result">' +
+      '<div class="search-result-art">' + artHtml + '</div>' +
+      '<div class="search-result-info">' +
+        '<div class="search-result-album"><em>' + esc(v.album_title) + '</em></div>' +
+        '<div class="search-result-artist">' + esc(v.artist) + '</div>' +
+        '<div class="search-result-meta">' +
+          'S' + esc(v.season_number) + ' &middot; Ep ' + esc(v.episode_number) +
+          (v.contributor_username ? ' &middot; ' + esc(v.contributor_username) : '') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  resultsEl.innerHTML = sortBar + '<div class="search-results">' + rows + '</div>';
 }
 
 function clearVinylSearch() {
@@ -968,6 +1024,9 @@ function clearVinylSearch() {
   if (inp) { inp.value = ''; inp.focus(); }
   var clearBtn = document.getElementById('vinyl-search-clear');
   if (clearBtn) clearBtn.style.display = 'none';
+  searchResults = [];
+  sortField = 'season_number';
+  sortDir   = 'desc';
   var resultsEl = document.getElementById('vinyl-search-results');
   if (resultsEl) { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; }
 }
