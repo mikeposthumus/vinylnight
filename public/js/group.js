@@ -1099,7 +1099,7 @@ function albumSleeveHtml(artist, album, contributor, artUrl, vinylId, playOrder,
   var extra = (clickable ? ' onclick="fetchSleeveArt(this)" style="cursor:pointer;" title="Click to load art"' : '') +
               (vinylId   ? ' data-vinyl-id="' + esc(vinylId) + '"' : '');
   var delBtn = (canDelete && vinylId)
-    ? '<button class="vinyl-del-btn" onclick="deleteVinyl(\'' + esc(vinylId) + '\', this)" title="Remove album">Remove</button>'
+    ? '<button class="vinyl-del-btn" style="display:none;" onclick="deleteVinyl(\'' + esc(vinylId) + '\', this)" title="Remove album">Remove</button>'
     : '';
   return '<div class="album-sleeve"' + extra + ' data-artist="' + esc(artist) + '" data-album="' + esc(album) + '">' +
     '<div class="album-sleeve-image">' + imgHtml + '</div>' +

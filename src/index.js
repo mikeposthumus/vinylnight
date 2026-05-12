@@ -30,7 +30,7 @@ export default {
         return env.ASSETS.fetch(new Request(new URL(cleanTarget, url).toString(), request));
       }
       if (url.pathname.match(/^\/group\/[^/.]+\/?$/)) {
-        return env.ASSETS.fetch(new Request(new URL('/group.html', url).toString(), request));
+        return env.ASSETS.fetch(new Request(new URL('/group', url).toString(), request));
       }
       return env.ASSETS.fetch(request);
     }
@@ -535,7 +535,7 @@ async function handleSeasonEpisodes(request, env, path) {
       FROM episode_vinyls v
       JOIN users u ON u.id = v.contributed_by
       WHERE v.episode_id IN (${episodeIds})
-      ORDER BY v.episode_id, v.added_at
+      ORDER BY v.episode_id, v.play_order NULLS LAST, v.added_at
     `).all(),
     env.DB.prepare(`
       SELECT ea.episode_id, u.username
