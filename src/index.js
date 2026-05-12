@@ -54,9 +54,12 @@ async function route(request, url, env) {
   if (path.match(/^\/api\/invitations\/[^/]+\/accept$/)          && method === 'POST') return handleAcceptInvitation(request, env, path);
   if (path.match(/^\/api\/invitations\/[^/]+\/decline$/)         && method === 'POST') return handleDeclineInvitation(request, env, path);
 
-  if (path.match(/^\/api\/seasons\/[^/]+\/episodes$/) && method === 'GET') return handleSeasonEpisodes(request, env, path);
+  if (path.match(/^\/api\/seasons\/[^/]+\/episodes$/) && method === 'GET')  return handleSeasonEpisodes(request, env, path);
+  if (path.match(/^\/api\/seasons\/[^/]+\/episodes$/) && method === 'POST') return handleCreateEpisode(request, env, path);
 
-  if (path.match(/^\/api\/episodes\/[^/]+\/vinyls$/) && method === 'POST') return handleAddVinyl(request, env, path);
+  if (path.match(/^\/api\/episodes\/[^/]+$/)              && method === 'PUT')  return handleUpdateEpisode(request, env, path);
+  if (path.match(/^\/api\/episodes\/[^/]+\/vinyls$/)      && method === 'POST') return handleAddVinyl(request, env, path);
+  if (path.match(/^\/api\/episodes\/[^/]+\/attendees$/)   && method === 'POST') return handleSetAttendees(request, env, path);
 
   return json({ error: 'Not found' }, 404);
 }
@@ -382,20 +385,135 @@ async function handleSeasonEpisodes(request, env, path) {
     ORDER BY e.number DESC
   `).bind(seasonId).all();
 
+  if (!episodes.results.length) return json({ episodes: [], vinyls: [] });
+
   const episodeIds = episodes.results.map(e => `'${e.id}'`).join(',');
-  let vinyls = [];
-  if (episodeIds.length) {
-    const result = await env.DB.prepare(`
+
+  const [vinylsResult, attendeesResult] = await Promise.all([
+    env.DB.prepare(`
       SELECT v.*, u.username AS contributor_username
       FROM episode_vinyls v
       JOIN users u ON u.id = v.contributed_by
       WHERE v.episode_id IN (${episodeIds})
       ORDER BY v.episode_id, v.added_at
-    `).all();
-    vinyls = result.results;
+    `).all(),
+    env.DB.prepare(`
+      SELECT ea.episode_id, u.username
+      FROM episode_attendees ea
+      JOIN users u ON u.id = ea.user_id
+      WHERE ea.episode_id IN (${episodeIds})
+      ORDER BY u.username
+    `).all(),
+  ]);
+
+  const attendeesByEp = {};
+  attendeesResult.results.forEach(a => {
+    if (!attendeesByEp[a.episode_id]) attendeesByEp[a.episode_id] = [];
+    attendeesByEp[a.episode_id].push(a.username);
+  });
+
+  const episodesOut = episodes.results.map(e =>
+    Object.assign({}, e, { attendees: attendeesByEp[e.id] || [] })
+  );
+
+  return json({ episodes: episodesOut, vinyls: vinylsResult.results });
+}
+
+async function handleCreateEpisode(request, env, path) {
+  const user = await requireAuth(request, env);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  const seasonId = path.split('/')[3];
+  const season = await env.DB.prepare(
+    'SELECT * FROM seasons WHERE id = ?'
+  ).bind(seasonId).first();
+  if (!season) return json({ error: 'Season not found' }, 404);
+
+  const membership = await env.DB.prepare(
+    "SELECT role FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"
+  ).bind(season.group_id, user.id).first();
+  if (!membership) return json({ error: 'Not a member of this group' }, 403);
+
+  const last = await env.DB.prepare(
+    'SELECT COALESCE(MAX(number), 0) AS max_num FROM episodes WHERE season_id = ?'
+  ).bind(seasonId).first();
+  const nextNumber = (last?.max_num || 0) + 1;
+
+  await env.DB.prepare(
+    "UPDATE episodes SET status = 'completed' WHERE season_id = ? AND status = 'current'"
+  ).bind(seasonId).run();
+
+  const id = crypto.randomUUID();
+  await env.DB.prepare(
+    "INSERT INTO episodes (id, season_id, number, status) VALUES (?, ?, ?, 'current')"
+  ).bind(id, seasonId, nextNumber).run();
+
+  return json({ id, number: nextNumber }, 201);
+}
+
+async function handleUpdateEpisode(request, env, path) {
+  const user = await requireAuth(request, env);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  const episodeId = path.split('/')[3];
+  const episode = await env.DB.prepare(`
+    SELECT e.id, s.group_id FROM episodes e
+    JOIN seasons s ON s.id = e.season_id WHERE e.id = ?
+  `).bind(episodeId).first();
+  if (!episode) return json({ error: 'Episode not found' }, 404);
+
+  const membership = await env.DB.prepare(
+    "SELECT id FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"
+  ).bind(episode.group_id, user.id).first();
+  if (!membership) return json({ error: 'Not a member' }, 403);
+
+  const body = await parseBody(request);
+  const { date, host_username } = body ?? {};
+
+  let hostId = null;
+  if (host_username) {
+    const host = await env.DB.prepare('SELECT id FROM users WHERE username = ?').bind(host_username).first();
+    hostId = host?.id ?? null;
   }
 
-  return json({ episodes: episodes.results, vinyls });
+  await env.DB.prepare('UPDATE episodes SET date = ?, host_id = ? WHERE id = ?')
+    .bind(date || null, hostId, episodeId).run();
+
+  return json({ ok: true });
+}
+
+async function handleSetAttendees(request, env, path) {
+  const user = await requireAuth(request, env);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  const episodeId = path.split('/')[3];
+  const episode = await env.DB.prepare(`
+    SELECT e.id, s.group_id FROM episodes e
+    JOIN seasons s ON s.id = e.season_id WHERE e.id = ?
+  `).bind(episodeId).first();
+  if (!episode) return json({ error: 'Episode not found' }, 404);
+
+  const membership = await env.DB.prepare(
+    "SELECT id FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"
+  ).bind(episode.group_id, user.id).first();
+  if (!membership) return json({ error: 'Not a member' }, 403);
+
+  const body = await parseBody(request);
+  const { usernames } = body ?? {};
+  if (!Array.isArray(usernames)) return json({ error: 'usernames array required' }, 400);
+
+  await env.DB.prepare('DELETE FROM episode_attendees WHERE episode_id = ?').bind(episodeId).run();
+
+  for (const username of usernames) {
+    const attendee = await env.DB.prepare('SELECT id FROM users WHERE username = ?').bind(username).first();
+    if (attendee) {
+      await env.DB.prepare(
+        'INSERT OR IGNORE INTO episode_attendees (episode_id, user_id) VALUES (?, ?)'
+      ).bind(episodeId, attendee.id).run();
+    }
+  }
+
+  return json({ ok: true });
 }
 
 async function handleAddVinyl(request, env, path) {

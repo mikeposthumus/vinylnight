@@ -405,15 +405,12 @@ ul { list-style: none; }
 
 .album-sleeve {
   background: var(--surface-raised);
-  border: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: border-color 0.2s;
 }
 
 .album-sleeve:hover {
-  border-color: var(--accent);
 }
 
 /* Square image area */
@@ -932,9 +929,7 @@ textarea {
 .albums-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: var(--border-subtle);
-  border: 1px solid var(--border-subtle);
+  gap: 0;
 }
 
 /* ── Numbered sections ──────────────────────────────────────── */
@@ -1119,9 +1114,7 @@ textarea {
 .members-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 1px;
-  background: var(--border-subtle);
-  border: 1px solid var(--border-subtle);
+  gap: 0;
   margin-bottom: 1.5rem;
 }
 
@@ -1413,6 +1406,15 @@ textarea {
   border: 1px solid var(--border-subtle);
 }
 
+.now-playing-episode-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
 .add-album-form {
   background: var(--surface-raised);
   border: 1px solid var(--border);
@@ -1498,9 +1500,7 @@ textarea {
 .episode-album-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: var(--border-subtle);
-  border: 1px solid var(--border-subtle);
+  gap: 0;
   margin-bottom: 1.5rem;
 }
 

@@ -4,6 +4,8 @@ var groupData = null;
 var currentUser = null;
 var isMember = false;
 var currentEpisodeId = null;
+var currentEpisodeNumber = null;
+var currentSeasonId = null;
 
 /* ── Boot ──────────────────────────────────────────────────── */
 (async function init() {
@@ -43,6 +45,7 @@ async function loadCurrentSeason() {
       '<p class="text-muted text-sm">No active season yet.</p>';
     return;
   }
+  currentSeasonId = activeSeason.id;
   var res = await fetch('/api/seasons/' + activeSeason.id + '/episodes');
   var data = await res.json();
   renderNowPlaying(activeSeason, data.episodes || [], data.vinyls || []);
@@ -60,27 +63,24 @@ function renderHero() {
     (g.location || '') + (g.founded_year ? ' — Est. ' + g.founded_year : '');
   document.getElementById('group-description').textContent = g.description || '';
 
-  var memberCount = groupData.members.length;
-  var seasonCount = seasons.length;
+  var memberCount  = groupData.members.length;
+  var seasonCount  = seasons.length;
   var episodeCount = seasons.reduce(function(s, x) { return s + (x.episode_count || 0); }, 0);
 
-  document.getElementById('stat-members').textContent = memberCount;
-  document.getElementById('stat-seasons').textContent = seasonCount;
+  document.getElementById('stat-members').textContent  = memberCount;
+  document.getElementById('stat-seasons').textContent  = seasonCount;
   document.getElementById('stat-episodes').textContent = episodeCount || '—';
-  document.getElementById('stat-albums').textContent = '—';
+  document.getElementById('stat-albums').textContent   = '—';
 
+  var completedCount = seasons.filter(function(s) { return s.status !== 'active'; }).length;
   document.getElementById('archive-summary').textContent =
-    seasonCount + ' season' + (seasonCount !== 1 ? 's' : '');
+    completedCount + ' completed season' + (completedCount !== 1 ? 's' : '');
 }
 
 /* ── Now Playing ───────────────────────────────────────────── */
 function renderNowPlaying(season, episodes, vinyls) {
-  var el = document.getElementById('now-playing-content');
-
-  if (!episodes.length) {
-    el.innerHTML = '<p class="text-muted text-sm">No episodes yet this season.</p>';
-    return;
-  }
+  var el   = document.getElementById('now-playing-content');
+  var wrap = document.getElementById('this-season-wrap');
 
   var vinylsByEp = {};
   vinyls.forEach(function(v) {
@@ -88,38 +88,130 @@ function renderNowPlaying(season, episodes, vinyls) {
     vinylsByEp[v.episode_id].push(v);
   });
 
-  var html = episodes.map(function(ep) {
-    var isCurrent = ep.status === 'current';
-    if (isCurrent) currentEpisodeId = ep.id;
+  var currentEp = episodes.find(function(e) { return e.status === 'current'; });
+  var otherEps  = episodes.filter(function(e) { return e.status !== 'current'; });
 
-    var epVinyls = vinylsByEp[ep.id] || [];
+  /* No current episode */
+  if (!currentEp) {
+    el.innerHTML = '<p class="text-muted text-sm" style="display:inline;">No current episode.</p>' +
+      ' <button id="start-ep-btn" class="btn btn-outline" style="margin-left:0.75rem;font-size:0.78rem;" ' +
+      'onclick="confirmNewEpisode()" style="display:none;">Start Episode</button>';
+    checkMembership();
+    renderThisSeason(season, otherEps, vinylsByEp);
+    return;
+  }
+
+  currentEpisodeId     = currentEp.id;
+  currentEpisodeNumber = currentEp.number;
+
+  var epVinyls  = vinylsByEp[currentEp.id] || [];
+  var dateLabel = currentEp.date ? monthLabel(currentEp.date) : '';
+
+  /* Album grid — only add empty sleeve if it won't start a new row */
+  var albumsHtml = epVinyls.map(function(v) {
+    return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url);
+  }).join('');
+  if (epVinyls.length % 3 !== 0) albumsHtml += emptySleeveHtml();
+
+  /* Meta line */
+  var metaParts = [];
+  if (dateLabel) metaParts.push(dateLabel);
+  if (currentEp.host_username) metaParts.push('Hosted by ' + esc(currentEp.host_username));
+  var attendeeList = currentEp.attendees || [];
+  if (attendeeList.length) {
+    metaParts.push(attendeeList.map(esc).join(', '));
+  }
+
+  /* Episode editor — host select + date + attendee checkboxes */
+  var members = groupData.members || [];
+  var hostOptions = '<option value="">— not set —</option>' +
+    members.map(function(m) {
+      var sel = currentEp.host_username === m.username ? ' selected' : '';
+      return '<option value="' + esc(m.username) + '"' + sel + '>' + esc(m.username) + '</option>';
+    }).join('');
+
+  var attendeeCheckboxes = members.map(function(m) {
+    var chk = attendeeList.indexOf(m.username) !== -1 ? ' checked' : '';
+    return '<label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.88rem;">' +
+      '<input type="checkbox" name="ep-attendee" value="' + esc(m.username) + '"' + chk + '>' +
+      esc(m.username) + '</label>';
+  }).join('');
+
+  el.innerHTML =
+    '<div class="now-playing-episode">' +
+      '<div class="now-playing-episode-header">' +
+        '<div>' +
+          '<p class="label" style="margin-bottom:0.4rem;">Season ' + season.number + ' &middot; Episode ' + currentEp.number + '</p>' +
+          (metaParts.length ? '<p class="text-sm text-muted">' + metaParts.join(' &middot; ') + '</p>' : '') +
+        '</div>' +
+        '<div id="episode-actions" style="display:none;gap:0.5rem;flex-wrap:wrap;">' +
+          '<button class="btn btn-outline" style="font-size:0.78rem;" onclick="toggleEpisodeEditor()">Edit Episode</button>' +
+          '<button class="btn btn-ghost" style="font-size:0.78rem;" onclick="confirmNewEpisode()">New Episode &rarr;</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div id="episode-editor" style="display:none;margin-bottom:1.5rem;padding:1.25rem;background:var(--surface-raised);border:1px solid var(--border-subtle);">' +
+        '<div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;">' +
+          '<div style="flex:1;min-width:140px;">' +
+            '<label style="display:block;margin-bottom:0.4rem;font-size:0.78rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);">Date</label>' +
+            '<input type="date" id="ep-date" value="' + esc(currentEp.date || '') + '">' +
+          '</div>' +
+          '<div style="flex:1;min-width:140px;">' +
+            '<label style="display:block;margin-bottom:0.4rem;font-size:0.78rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);">Host</label>' +
+            '<select id="ep-host" style="width:100%;background:var(--surface);border:1px solid var(--border-subtle);color:var(--text);padding:0.6rem 0.75rem;font-family:inherit;font-size:0.9rem;">' +
+              hostOptions +
+            '</select>' +
+          '</div>' +
+        '</div>' +
+        (members.length ?
+          '<div style="margin-bottom:1.25rem;">' +
+            '<p style="font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.75rem;">Who attended?</p>' +
+            '<div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;">' + attendeeCheckboxes + '</div>' +
+          '</div>'
+        : '') +
+        '<div style="display:flex;gap:0.75rem;">' +
+          '<button class="btn btn-primary" onclick="saveEpisodeDetails()">Save</button>' +
+          '<button class="btn btn-ghost" onclick="toggleEpisodeEditor()">Cancel</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="episode-album-grid" id="current-album-grid">' + albumsHtml + '</div>' +
+
+      '<div id="add-album-form" style="display:none;margin-top:0;">' +
+        '<p class="add-album-form-title">Add your selection for this episode</p>' +
+        '<div class="add-album-row">' +
+          '<div><label for="add-artist">Artist</label><input type="text" id="add-artist" placeholder="Artist name" oninput="fetchAlbumArt()"></div>' +
+          '<div><label for="add-album-title">Album</label><input type="text" id="add-album-title" placeholder="Album title" oninput="fetchAlbumArt()"></div>' +
+          '<div style="display:flex;align-items:flex-end;gap:0.75rem;">' +
+            '<div class="art-preview" id="art-preview" title="Album art preview"><div class="art-preview-icon"></div></div>' +
+            '<button type="button" class="btn btn-primary" onclick="addAlbum()">Add</button>' +
+          '</div>' +
+        '</div>' +
+        '<p class="form-hint mt-2">Album art is fetched automatically from the iTunes catalog as you type.</p>' +
+      '</div>' +
+    '</div>';
+
+  checkMembership();
+  loadAlbumArtForContainer(el);
+  renderThisSeason(season, otherEps, vinylsByEp);
+}
+
+function renderThisSeason(season, episodes, vinylsByEp) {
+  var wrap = document.getElementById('this-season-wrap');
+  if (!episodes.length) { wrap.innerHTML = ''; return; }
+
+  var html = episodes.map(function(ep) {
+    var epVinyls  = vinylsByEp[ep.id] || [];
     var dateLabel = ep.date ? monthLabel(ep.date) : '';
+    var badge = ep.status === 'upcoming'
+      ? '<span class="tag">Upcoming</span>'
+      : '<span class="tag">Completed</span>';
 
     var albumsHtml = epVinyls.map(function(v) {
       return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url);
     }).join('');
-    if (isCurrent) albumsHtml += emptySleeveHtml();
 
-    var badge = isCurrent
-      ? '<span class="tag tag-green">Current</span>'
-      : '<span class="tag">Completed</span>';
-
-    var addForm = isCurrent
-      ? '<div class="add-album-form" id="add-album-form" style="display:none;">' +
-          '<p class="add-album-form-title">Add your selection for this episode</p>' +
-          '<div class="add-album-row">' +
-            '<div><label for="add-artist">Artist</label><input type="text" id="add-artist" placeholder="Artist name" oninput="fetchAlbumArt()"></div>' +
-            '<div><label for="add-album-title">Album</label><input type="text" id="add-album-title" placeholder="Album title" oninput="fetchAlbumArt()"></div>' +
-            '<div style="display:flex;align-items:flex-end;gap:0.75rem;">' +
-              '<div class="art-preview" id="art-preview" title="Album art preview"><div class="art-preview-icon"></div></div>' +
-              '<button type="button" class="btn btn-primary" onclick="addAlbum()">Add</button>' +
-            '</div>' +
-          '</div>' +
-          '<p class="form-hint mt-2">Album art is fetched automatically from the iTunes catalog as you type.</p>' +
-        '</div>'
-      : '';
-
-    return '<details class="season"' + (isCurrent ? ' open' : '') + '>' +
+    return '<details class="season">' +
       '<summary>' +
         '<div>' +
           '<span class="season-title">Episode ' + ep.number +
@@ -128,32 +220,33 @@ function renderNowPlaying(season, episodes, vinyls) {
             (ep.attendee_count ? ' &middot; ' + ep.attendee_count + ' attended' : '') + '</p>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:1.5rem;">' +
-          badge +
-          '<span class="season-chevron">&#9656;</span>' +
+          badge + '<span class="season-chevron">&#9656;</span>' +
         '</div>' +
       '</summary>' +
       '<div style="padding-top:1.5rem;">' +
-        '<div class="episode-album-grid">' + albumsHtml + '</div>' +
-        addForm +
+        (albumsHtml
+          ? '<div class="episode-album-grid">' + albumsHtml + '</div>'
+          : '<p class="text-muted text-sm">No albums recorded.</p>') +
       '</div>' +
     '</details>';
   }).join('');
 
-  el.innerHTML = '<p class="label mb-4">Season ' + season.number + ' &mdash; ' + season.year + '</p>' + html;
+  wrap.innerHTML =
+    '<hr class="groove" style="margin:2rem 0;">' +
+    '<p class="label mb-4">Season ' + season.number + ' &mdash; ' + season.year + '</p>' +
+    html;
 
-  checkMembership();
-  loadAlbumArtForContainer(el);
+  loadAlbumArtForContainer(wrap);
 }
 
 /* ── Members ───────────────────────────────────────────────── */
 function renderMembers() {
   var members = groupData.members;
-  var grid = document.getElementById('members-grid');
-
+  var grid    = document.getElementById('members-grid');
   document.getElementById('member-count-label').textContent = members.length + ' total';
 
   grid.innerHTML = members.map(function(m) {
-    var initial = (m.username || '?')[0].toUpperCase();
+    var initial   = (m.username || '?')[0].toUpperCase();
     var roleLabel = m.role === 'founder' ? 'Founder' : 'Member';
     return '<a href="user.html?user=' + esc(m.username) + '" class="member-card">' +
       '<div class="avatar">' + esc(initial) + '</div>' +
@@ -167,26 +260,25 @@ function renderMembers() {
 
 /* ── Archive ───────────────────────────────────────────────── */
 function renderArchive() {
-  var seasons = groupData.seasons;
-  var el = document.getElementById('archive-content');
+  var seasons = groupData.seasons.filter(function(s) { return s.status !== 'active'; });
+  var el      = document.getElementById('archive-content');
 
   if (!seasons.length) {
-    el.innerHTML = '<p class="text-muted text-sm">No archive yet.</p>';
+    el.innerHTML = '<p class="text-muted text-sm">No archive yet — completed seasons will appear here.</p>';
     return;
   }
 
   el.innerHTML = seasons.map(function(s, idx) {
-    var isCurrent = s.status === 'active';
     var epCount = s.episode_count || 0;
-    return '<details class="season" id="season-' + s.id + '"' + (idx === 0 ? ' open' : '') + ' ' +
-           'ontoggle="onSeasonToggle(this, \'' + s.id + '\')">' +
+    return '<details class="season" id="season-' + s.id + '"' + (idx === 0 ? ' open' : '') +
+           ' ontoggle="onSeasonToggle(this, \'' + s.id + '\')">' +
       '<summary>' +
         '<div>' +
           '<span class="season-title">Season ' + s.number + ' — ' + s.year + '</span>' +
           '<p class="text-xs text-muted mt-1">' + epCount + ' episode' + (epCount !== 1 ? 's' : '') + '</p>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:1.5rem;">' +
-          '<span class="season-meta">' + (isCurrent ? 'Current Season' : 'Completed') + '</span>' +
+          '<span class="season-meta">Completed</span>' +
           '<span class="season-chevron">&#9656;</span>' +
         '</div>' +
       '</summary>' +
@@ -208,10 +300,10 @@ async function loadSeasonEpisodes(seasonId) {
   if (loadedSeasons[seasonId]) return;
   loadedSeasons[seasonId] = true;
 
-  var res = await fetch('/api/seasons/' + seasonId + '/episodes');
+  var res  = await fetch('/api/seasons/' + seasonId + '/episodes');
   var data = await res.json();
   var episodes = data.episodes || [];
-  var vinyls = data.vinyls || [];
+  var vinyls   = data.vinyls   || [];
 
   var vinylsByEp = {};
   vinyls.forEach(function(v) {
@@ -220,17 +312,17 @@ async function loadSeasonEpisodes(seasonId) {
   });
 
   var season = groupData.seasons.find(function(s) { return s.id === seasonId; });
-  var sNum = season ? season.number : '?';
+  var sNum   = season ? season.number : '?';
 
   var html = episodes.map(function(ep) {
-    var epVinyls = vinylsByEp[ep.id] || [];
+    var epVinyls  = vinylsByEp[ep.id] || [];
     var dateLabel = ep.date ? monthLabel(ep.date) : '';
     var albumsHtml = epVinyls.map(function(v) {
       return albumSleeveHtml(v.artist, v.album_title, null, v.art_url);
     }).join('');
 
     return '<div class="archive-episode">' +
-      '<p class="archive-episode-label">S' + sNum + ' E' + String(ep.number).padStart(2,'0') +
+      '<p class="archive-episode-label">S' + sNum + ' E' + String(ep.number).padStart(2, '0') +
         (dateLabel ? ' &middot; ' + dateLabel : '') + '</p>' +
       '<p class="archive-episode-meta">Hosted by ' + esc(ep.host_username || 'TBD') +
         (ep.attendee_count ? ' &middot; ' + ep.attendee_count + ' attended' : '') + '</p>' +
@@ -238,23 +330,28 @@ async function loadSeasonEpisodes(seasonId) {
     '</div>';
   }).join('');
 
-  document.getElementById('eps-' + seasonId).innerHTML = html ||
+  var container = document.getElementById('eps-' + seasonId);
+  container.innerHTML = html ||
     '<p class="text-muted text-sm" style="padding:1rem 0;">No episodes recorded yet.</p>';
-  if (html) loadAlbumArtForContainer(document.getElementById('eps-' + seasonId));
+  if (html) loadAlbumArtForContainer(container);
 }
 
 /* ── Auth state / membership ────────────────────────────────── */
 function checkMembership() {
   if (!groupData || !currentUser) return;
-  var member = groupData.members.find(function(m) { return m.id === currentUser.id; });
-  isMember = !!member;
+  var member    = groupData.members.find(function(m) { return m.id === currentUser.id; });
+  isMember      = !!member;
   var isFounder = member && member.role === 'founder';
 
   document.getElementById('state-guest').style.display = 'none';
   if (isMember) {
     document.getElementById('state-member').style.display = '';
-    var form = document.getElementById('add-album-form');
+    var form    = document.getElementById('add-album-form');
     if (form) form.style.display = '';
+    var actions = document.getElementById('episode-actions');
+    if (actions) actions.style.display = 'flex';
+    var startBtn = document.getElementById('start-ep-btn');
+    if (startBtn) startBtn.style.display = '';
   } else {
     document.getElementById('state-nonmember').style.display = '';
   }
@@ -266,12 +363,68 @@ function checkMembership() {
   document.getElementById('nav-auth-link').textContent = currentUser.username;
 }
 
+/* ── Episode management ─────────────────────────────────────── */
+function toggleEpisodeEditor() {
+  var ed = document.getElementById('episode-editor');
+  if (!ed) return;
+  ed.style.display = ed.style.display === 'none' ? '' : 'none';
+}
+
+async function saveEpisodeDetails() {
+  if (!currentEpisodeId) return;
+  var dateEl  = document.getElementById('ep-date');
+  var hostEl  = document.getElementById('ep-host');
+  var date    = dateEl ? dateEl.value : '';
+  var host    = hostEl ? hostEl.value : '';
+  var checked = document.querySelectorAll('input[name="ep-attendee"]:checked');
+  var attendees = Array.from(checked).map(function(b) { return b.value; });
+
+  try {
+    var results = await Promise.all([
+      fetch('/api/episodes/' + currentEpisodeId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: date || null, host_username: host || null }),
+      }),
+      fetch('/api/episodes/' + currentEpisodeId + '/attendees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usernames: attendees }),
+      }),
+    ]);
+    if (!results[0].ok || !results[1].ok) { alert('Could not save changes.'); return; }
+    await loadCurrentSeason();
+  } catch(e) {
+    alert('Could not save changes.');
+  }
+}
+
+async function confirmNewEpisode() {
+  if (!currentSeasonId) return;
+  var msg = currentEpisodeNumber
+    ? 'This will close Episode ' + currentEpisodeNumber + ' and start Episode ' + (currentEpisodeNumber + 1) + '. Continue?'
+    : 'Start the first episode of this season?';
+  if (!confirm(msg)) return;
+
+  try {
+    var res = await fetch('/api/seasons/' + currentSeasonId + '/episodes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) { var e = await res.json(); alert(e.error || 'Could not create episode.'); return; }
+    await loadCurrentSeason();
+  } catch(e) {
+    alert('Could not create episode.');
+  }
+}
+
 /* ── Album art (iTunes) ─────────────────────────────────────── */
 var artTimer = null;
 function fetchAlbumArt() {
   clearTimeout(artTimer);
-  var artist  = (document.getElementById('add-artist') || {}).value || '';
-  var album   = (document.getElementById('add-album-title') || {}).value || '';
+  var artist  = (document.getElementById('add-artist')       || {}).value || '';
+  var album   = (document.getElementById('add-album-title')  || {}).value || '';
   var preview = document.getElementById('art-preview');
   if (!preview) return;
   artist = artist.trim(); album = album.trim();
@@ -300,7 +453,7 @@ function fetchAlbumArt() {
 
 async function addAlbum() {
   if (!currentEpisodeId) return;
-  var artist = (document.getElementById('add-artist').value || '').trim();
+  var artist = (document.getElementById('add-artist').value      || '').trim();
   var album  = (document.getElementById('add-album-title').value || '').trim();
   var artUrl = document.getElementById('art-preview').dataset.artUrl || null;
   if (!artist || !album) return;
@@ -312,7 +465,7 @@ async function addAlbum() {
   });
 
   if (res.ok) {
-    document.getElementById('add-artist').value = '';
+    document.getElementById('add-artist').value      = '';
     document.getElementById('add-album-title').value = '';
     document.getElementById('art-preview').innerHTML = '<div class="art-preview-icon"></div>';
     delete document.getElementById('art-preview').dataset.artUrl;
@@ -332,7 +485,7 @@ function toggleInviteForm() {
   form.style.display = isOpen ? 'none' : '';
   if (!isOpen) {
     document.getElementById('invite-username').value = '';
-    errEl.style.display = 'none';
+    errEl.style.display   = 'none';
     success.style.display = 'none';
   }
 }
@@ -341,11 +494,11 @@ async function sendInvite() {
   var username = (document.getElementById('invite-username').value || '').trim();
   var errEl    = document.getElementById('invite-error');
   var success  = document.getElementById('invite-success');
-  errEl.style.display = 'none';
+  errEl.style.display   = 'none';
   success.style.display = 'none';
   if (!username) { errEl.textContent = 'Enter a username.'; errEl.style.display = ''; return; }
 
-  var res = await fetch('/api/groups/' + GROUP_SLUG + '/invite', {
+  var res  = await fetch('/api/groups/' + GROUP_SLUG + '/invite', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: username }),
@@ -353,10 +506,10 @@ async function sendInvite() {
   var data = await res.json();
   if (res.ok) {
     document.getElementById('invite-username').value = '';
-    success.textContent = 'Invitation sent to ' + data.invited + '.';
+    success.textContent   = 'Invitation sent to ' + data.invited + '.';
     success.style.display = '';
   } else {
-    errEl.textContent = data.error || 'Could not send invitation.';
+    errEl.textContent   = data.error || 'Could not send invitation.';
     errEl.style.display = '';
   }
 }
@@ -374,16 +527,17 @@ function switchTab(name) {
 /* ── Album art for sleeves (iTunes) ─────────────────────────── */
 function loadAlbumArtForContainer(container) {
   container.querySelectorAll('.album-sleeve[data-artist]').forEach(function(sleeve) {
+    if (sleeve.querySelector('img') || sleeve.dataset.artLoading) return;
+    sleeve.dataset.artLoading = '1';
     var artist = sleeve.dataset.artist;
     var album  = sleeve.dataset.album;
-    if (!artist || !album) return;
-    var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
-    if (!placeholder) return;
     fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + album) + '&media=music&entity=album&limit=1')
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.results && data.results.length) {
           var art = data.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+          var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
+          if (!placeholder) return;
           var img = document.createElement('img');
           img.src = art;
           img.alt = artist + ' — ' + album;
@@ -410,7 +564,7 @@ function albumSleeveHtml(artist, album, contributor, artUrl) {
 }
 
 function emptySleeveHtml() {
-  return '<div class="album-sleeve" style="border-style:dashed;opacity:0.35;cursor:default;">' +
+  return '<div class="album-sleeve" style="opacity:0.25;cursor:default;">' +
     '<div class="album-sleeve-image"><div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div></div>' +
   '</div>';
 }
@@ -421,10 +575,9 @@ function monthLabel(dateStr) {
 }
 
 function esc(str) {
-  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function groupSlugFromURL() {
-  var params = new URLSearchParams(window.location.search);
-  return params.get('group') || 'the-original';
+  return new URLSearchParams(window.location.search).get('group') || 'the-original';
 }
