@@ -18,7 +18,6 @@ async function loadGroup() {
     if (!res.ok) { document.getElementById('group-name').textContent = 'Group not found'; return; }
     groupData = await res.json();
     renderHero();
-    renderMembers();
     renderArchive();
     await loadCurrentSeason();
   } catch (e) {
@@ -46,15 +45,16 @@ async function loadCurrentSeason() {
     return;
   }
   currentSeasonId = activeSeason.id;
-  var res = await fetch('/api/seasons/' + activeSeason.id + '/episodes');
+  var res  = await fetch('/api/seasons/' + activeSeason.id + '/episodes');
   var data = await res.json();
   renderNowPlaying(activeSeason, data.episodes || [], data.vinyls || []);
 }
 
 /* ── Hero ──────────────────────────────────────────────────── */
 function renderHero() {
-  var g = groupData.group;
+  var g       = groupData.group;
   var seasons = groupData.seasons;
+  var members = groupData.members;
 
   document.title = g.name + ' — Vinyl Night';
   document.querySelector('meta[name="description"]').content = g.description || g.name;
@@ -63,18 +63,29 @@ function renderHero() {
     (g.location || '') + (g.founded_year ? ' — Est. ' + g.founded_year : '');
   document.getElementById('group-description').textContent = g.description || '';
 
-  var memberCount  = groupData.members.length;
-  var seasonCount  = seasons.length;
   var episodeCount = seasons.reduce(function(s, x) { return s + (x.episode_count || 0); }, 0);
-
-  document.getElementById('stat-members').textContent  = memberCount;
-  document.getElementById('stat-seasons').textContent  = seasonCount;
+  document.getElementById('stat-members').textContent  = members.length;
+  document.getElementById('stat-seasons').textContent  = seasons.length;
   document.getElementById('stat-episodes').textContent = episodeCount || '—';
-  document.getElementById('stat-albums').textContent   = '—';
+  document.getElementById('stat-albums').textContent   = groupData.vinyl_count || '—';
 
   var completedCount = seasons.filter(function(s) { return s.status !== 'active'; }).length;
   document.getElementById('archive-summary').textContent =
     completedCount + ' completed season' + (completedCount !== 1 ? 's' : '');
+
+  /* Members row under description */
+  var heroMembers = document.getElementById('hero-members');
+  if (heroMembers) {
+    heroMembers.innerHTML = members.map(function(m) {
+      var initial   = (m.username || '?')[0].toUpperCase();
+      var isFounder = m.role === 'founder';
+      return '<a href="user.html?user=' + esc(m.username) + '" class="hero-member">' +
+        '<div class="avatar">' + esc(initial) + '</div>' +
+        esc(m.username) +
+        (isFounder ? '<span class="hero-member-role">Founder</span>' : '') +
+      '</a>';
+    }).join('');
+  }
 }
 
 /* ── Now Playing ───────────────────────────────────────────── */
@@ -91,11 +102,9 @@ function renderNowPlaying(season, episodes, vinyls) {
   var currentEp = episodes.find(function(e) { return e.status === 'current'; });
   var otherEps  = episodes.filter(function(e) { return e.status !== 'current'; });
 
-  /* No current episode */
   if (!currentEp) {
     el.innerHTML = '<p class="text-muted text-sm" style="display:inline;">No current episode.</p>' +
-      ' <button id="start-ep-btn" class="btn btn-outline" style="margin-left:0.75rem;font-size:0.78rem;" ' +
-      'onclick="confirmNewEpisode()" style="display:none;">Start Episode</button>';
+      '<button id="start-ep-btn" class="btn btn-outline" style="display:none;margin-left:0.75rem;font-size:0.78rem;" onclick="confirmNewEpisode()">Start Episode</button>';
     checkMembership();
     renderThisSeason(season, otherEps, vinylsByEp);
     return;
@@ -107,23 +116,22 @@ function renderNowPlaying(season, episodes, vinyls) {
   var epVinyls  = vinylsByEp[currentEp.id] || [];
   var dateLabel = currentEp.date ? monthLabel(currentEp.date) : '';
 
-  /* Album grid — only add empty sleeve if it won't start a new row */
+  /* Only add empty sleeve if it stays on the current row */
   var albumsHtml = epVinyls.map(function(v) {
     return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url);
   }).join('');
   if (epVinyls.length % 3 !== 0) albumsHtml += emptySleeveHtml();
 
-  /* Meta line */
+  /* Meta */
   var metaParts = [];
   if (dateLabel) metaParts.push(dateLabel);
   if (currentEp.host_username) metaParts.push('Hosted by ' + esc(currentEp.host_username));
   var attendeeList = currentEp.attendees || [];
-  if (attendeeList.length) {
-    metaParts.push(attendeeList.map(esc).join(', '));
-  }
+  if (attendeeList.length) metaParts.push(attendeeList.map(esc).join(', '));
 
-  /* Episode editor — host select + date + attendee checkboxes */
+  /* Episode editor */
   var members = groupData.members || [];
+
   var hostOptions = '<option value="">— not set —</option>' +
     members.map(function(m) {
       var sel = currentEp.host_username === m.username ? ' selected' : '';
@@ -132,10 +140,17 @@ function renderNowPlaying(season, episodes, vinyls) {
 
   var attendeeCheckboxes = members.map(function(m) {
     var chk = attendeeList.indexOf(m.username) !== -1 ? ' checked' : '';
-    return '<label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.88rem;">' +
-      '<input type="checkbox" name="ep-attendee" value="' + esc(m.username) + '"' + chk + '>' +
-      esc(m.username) + '</label>';
+    return '<label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">' +
+      '<input type="checkbox" name="ep-attendee" value="' + esc(m.username) + '"' + chk + '> ' +
+      '<span style="font-size:0.88rem;">' + esc(m.username) + '</span>' +
+    '</label>';
   }).join('');
+
+  /* Contributor dropdown for add-album form */
+  var contribOptions = '<option value="">Select member…</option>' +
+    members.map(function(m) {
+      return '<option value="' + esc(m.username) + '">' + esc(m.username) + '</option>';
+    }).join('');
 
   el.innerHTML =
     '<div class="now-playing-episode">' +
@@ -150,23 +165,22 @@ function renderNowPlaying(season, episodes, vinyls) {
         '</div>' +
       '</div>' +
 
-      '<div id="episode-editor" style="display:none;margin-bottom:1.5rem;padding:1.25rem;background:var(--surface-raised);border:1px solid var(--border-subtle);">' +
-        '<div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;">' +
-          '<div style="flex:1;min-width:140px;">' +
-            '<label style="display:block;margin-bottom:0.4rem;font-size:0.78rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);">Date</label>' +
+      /* Episode editor — uses form-group styling */
+      '<div id="episode-editor" style="display:none;padding:1.5rem;background:var(--surface-raised);border:1px solid var(--border-subtle);margin-bottom:1.5rem;">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">' +
+          '<div class="form-group" style="margin-bottom:0;">' +
+            '<label for="ep-date">Date</label>' +
             '<input type="date" id="ep-date" value="' + esc(currentEp.date || '') + '">' +
           '</div>' +
-          '<div style="flex:1;min-width:140px;">' +
-            '<label style="display:block;margin-bottom:0.4rem;font-size:0.78rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);">Host</label>' +
-            '<select id="ep-host" style="width:100%;background:var(--surface);border:1px solid var(--border-subtle);color:var(--text);padding:0.6rem 0.75rem;font-family:inherit;font-size:0.9rem;">' +
-              hostOptions +
-            '</select>' +
+          '<div class="form-group" style="margin-bottom:0;">' +
+            '<label for="ep-host">Host</label>' +
+            '<select id="ep-host">' + hostOptions + '</select>' +
           '</div>' +
         '</div>' +
         (members.length ?
-          '<div style="margin-bottom:1.25rem;">' +
-            '<p style="font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.75rem;">Who attended?</p>' +
-            '<div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;">' + attendeeCheckboxes + '</div>' +
+          '<div class="form-group" style="margin-bottom:1.25rem;">' +
+            '<label>Who attended?</label>' +
+            '<div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;padding-top:0.25rem;">' + attendeeCheckboxes + '</div>' +
           '</div>'
         : '') +
         '<div style="display:flex;gap:0.75rem;">' +
@@ -178,8 +192,12 @@ function renderNowPlaying(season, episodes, vinyls) {
       '<div class="episode-album-grid" id="current-album-grid">' + albumsHtml + '</div>' +
 
       '<div id="add-album-form" style="display:none;margin-top:0;">' +
-        '<p class="add-album-form-title">Add your selection for this episode</p>' +
+        '<p class="add-album-form-title">Add selection for this episode</p>' +
         '<div class="add-album-row">' +
+          '<div>' +
+            '<label for="add-contributor">Contributor</label>' +
+            '<select id="add-contributor">' + contribOptions + '</select>' +
+          '</div>' +
           '<div><label for="add-artist">Artist</label><input type="text" id="add-artist" placeholder="Artist name" oninput="fetchAlbumArt()"></div>' +
           '<div><label for="add-album-title">Album</label><input type="text" id="add-album-title" placeholder="Album title" oninput="fetchAlbumArt()"></div>' +
           '<div style="display:flex;align-items:flex-end;gap:0.75rem;">' +
@@ -187,7 +205,7 @@ function renderNowPlaying(season, episodes, vinyls) {
             '<button type="button" class="btn btn-primary" onclick="addAlbum()">Add</button>' +
           '</div>' +
         '</div>' +
-        '<p class="form-hint mt-2">Album art is fetched automatically from the iTunes catalog as you type.</p>' +
+        '<p class="form-hint mt-2">Art is fetched automatically from the iTunes catalog as you type.</p>' +
       '</div>' +
     '</div>';
 
@@ -203,7 +221,7 @@ function renderThisSeason(season, episodes, vinylsByEp) {
   var html = episodes.map(function(ep) {
     var epVinyls  = vinylsByEp[ep.id] || [];
     var dateLabel = ep.date ? monthLabel(ep.date) : '';
-    var badge = ep.status === 'upcoming'
+    var badge     = ep.status === 'upcoming'
       ? '<span class="tag">Upcoming</span>'
       : '<span class="tag">Completed</span>';
 
@@ -239,27 +257,9 @@ function renderThisSeason(season, episodes, vinylsByEp) {
   loadAlbumArtForContainer(wrap);
 }
 
-/* ── Members ───────────────────────────────────────────────── */
-function renderMembers() {
-  var members = groupData.members;
-  var grid    = document.getElementById('members-grid');
-  document.getElementById('member-count-label').textContent = members.length + ' total';
-
-  grid.innerHTML = members.map(function(m) {
-    var initial   = (m.username || '?')[0].toUpperCase();
-    var roleLabel = m.role === 'founder' ? 'Founder' : 'Member';
-    return '<a href="user.html?user=' + esc(m.username) + '" class="member-card">' +
-      '<div class="avatar">' + esc(initial) + '</div>' +
-      '<div>' +
-        '<p class="member-card-role">' + roleLabel + '</p>' +
-        '<p class="member-card-name">' + esc(m.username) + '</p>' +
-      '</div>' +
-    '</a>';
-  }).join('');
-}
-
 /* ── Archive ───────────────────────────────────────────────── */
 function renderArchive() {
+  /* Seasons already arrive in DESC order (newest first) from the API */
   var seasons = groupData.seasons.filter(function(s) { return s.status !== 'active'; });
   var el      = document.getElementById('archive-content');
 
@@ -283,7 +283,7 @@ function renderArchive() {
         '</div>' +
       '</summary>' +
       '<div class="episodes-list" id="eps-' + s.id + '">' +
-        '<p class="text-muted text-sm" style="padding:1rem 0;">Loading episodes&hellip;</p>' +
+        '<p class="text-muted text-sm" style="padding:1rem 0;">Loading&hellip;</p>' +
       '</div>' +
     '</details>';
   }).join('');
@@ -302,8 +302,9 @@ async function loadSeasonEpisodes(seasonId) {
 
   var res  = await fetch('/api/seasons/' + seasonId + '/episodes');
   var data = await res.json();
-  var episodes = data.episodes || [];
-  var vinyls   = data.vinyls   || [];
+  /* Episodes come DESC from API — reverse to show EP 1, 2, 3... in archive */
+  var episodes = (data.episodes || []).slice().reverse();
+  var vinyls   = data.vinyls || [];
 
   var vinylsByEp = {};
   vinyls.forEach(function(v) {
@@ -318,16 +319,25 @@ async function loadSeasonEpisodes(seasonId) {
     var epVinyls  = vinylsByEp[ep.id] || [];
     var dateLabel = ep.date ? monthLabel(ep.date) : '';
     var albumsHtml = epVinyls.map(function(v) {
-      return albumSleeveHtml(v.artist, v.album_title, null, v.art_url);
+      return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url);
     }).join('');
 
-    return '<div class="archive-episode">' +
-      '<p class="archive-episode-label">S' + sNum + ' E' + String(ep.number).padStart(2, '0') +
-        (dateLabel ? ' &middot; ' + dateLabel : '') + '</p>' +
-      '<p class="archive-episode-meta">Hosted by ' + esc(ep.host_username || 'TBD') +
-        (ep.attendee_count ? ' &middot; ' + ep.attendee_count + ' attended' : '') + '</p>' +
-      '<div class="episode-album-grid">' + albumsHtml + '</div>' +
-    '</div>';
+    return '<details class="season">' +
+      '<summary>' +
+        '<div>' +
+          '<span class="season-title">Episode ' + ep.number +
+            (dateLabel ? ' &mdash; ' + dateLabel : '') + '</span>' +
+          '<p class="text-xs text-muted mt-1">Hosted by ' + esc(ep.host_username || 'TBD') +
+            (ep.attendee_count ? ' &middot; ' + ep.attendee_count + ' attended' : '') + '</p>' +
+        '</div>' +
+        '<span class="season-chevron">&#9656;</span>' +
+      '</summary>' +
+      '<div style="padding-top:1.5rem;">' +
+        (albumsHtml
+          ? '<div class="episode-album-grid">' + albumsHtml + '</div>'
+          : '<p class="text-muted text-sm">No albums recorded.</p>') +
+      '</div>' +
+    '</details>';
   }).join('');
 
   var container = document.getElementById('eps-' + seasonId);
@@ -345,13 +355,15 @@ function checkMembership() {
 
   document.getElementById('state-guest').style.display = 'none';
   if (isMember) {
-    document.getElementById('state-member').style.display = '';
     var form    = document.getElementById('add-album-form');
     if (form) form.style.display = '';
     var actions = document.getElementById('episode-actions');
     if (actions) actions.style.display = 'flex';
     var startBtn = document.getElementById('start-ep-btn');
     if (startBtn) startBtn.style.display = '';
+    /* Pre-select the logged-in user in the contributor dropdown */
+    var contribSel = document.getElementById('add-contributor');
+    if (contribSel && currentUser) contribSel.value = currentUser.username;
   } else {
     document.getElementById('state-nonmember').style.display = '';
   }
@@ -374,8 +386,6 @@ async function saveEpisodeDetails() {
   if (!currentEpisodeId) return;
   var dateEl  = document.getElementById('ep-date');
   var hostEl  = document.getElementById('ep-host');
-  var date    = dateEl ? dateEl.value : '';
-  var host    = hostEl ? hostEl.value : '';
   var checked = document.querySelectorAll('input[name="ep-attendee"]:checked');
   var attendees = Array.from(checked).map(function(b) { return b.value; });
 
@@ -384,7 +394,10 @@ async function saveEpisodeDetails() {
       fetch('/api/episodes/' + currentEpisodeId, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: date || null, host_username: host || null }),
+        body: JSON.stringify({
+          date:          dateEl ? (dateEl.value || null) : null,
+          host_username: hostEl ? (hostEl.value || null) : null,
+        }),
       }),
       fetch('/api/episodes/' + currentEpisodeId + '/attendees', {
         method: 'POST',
@@ -423,8 +436,8 @@ async function confirmNewEpisode() {
 var artTimer = null;
 function fetchAlbumArt() {
   clearTimeout(artTimer);
-  var artist  = (document.getElementById('add-artist')       || {}).value || '';
-  var album   = (document.getElementById('add-album-title')  || {}).value || '';
+  var artist  = (document.getElementById('add-artist')      || {}).value || '';
+  var album   = (document.getElementById('add-album-title') || {}).value || '';
   var preview = document.getElementById('art-preview');
   if (!preview) return;
   artist = artist.trim(); album = album.trim();
@@ -453,15 +466,22 @@ function fetchAlbumArt() {
 
 async function addAlbum() {
   if (!currentEpisodeId) return;
-  var artist = (document.getElementById('add-artist').value      || '').trim();
-  var album  = (document.getElementById('add-album-title').value || '').trim();
-  var artUrl = document.getElementById('art-preview').dataset.artUrl || null;
+  var artist      = (document.getElementById('add-artist').value      || '').trim();
+  var album       = (document.getElementById('add-album-title').value || '').trim();
+  var artUrl      = document.getElementById('art-preview').dataset.artUrl || null;
+  var contribSel  = document.getElementById('add-contributor');
+  var contributor = contribSel ? contribSel.value : '';
   if (!artist || !album) return;
 
   var res = await fetch('/api/episodes/' + currentEpisodeId + '/vinyls', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ artist: artist, album_title: album, art_url: artUrl }),
+    body: JSON.stringify({
+      artist:               artist,
+      album_title:          album,
+      art_url:              artUrl,
+      contributor_username: contributor || null,
+    }),
   });
 
   if (res.ok) {
@@ -516,11 +536,11 @@ async function sendInvite() {
 
 /* ── Tab switching ──────────────────────────────────────────── */
 function switchTab(name) {
-  ['now', 'members', 'archive'].forEach(function(t) {
+  ['now', 'archive'].forEach(function(t) {
     document.getElementById('tab-' + t).classList.toggle('active', t === name);
   });
   document.querySelectorAll('.section-tab').forEach(function(btn, i) {
-    btn.classList.toggle('active', ['now', 'members', 'archive'][i] === name);
+    btn.classList.toggle('active', ['now', 'archive'][i] === name);
   });
 }
 
@@ -558,13 +578,13 @@ function albumSleeveHtml(artist, album, contributor, artUrl) {
     '<div class="album-sleeve-footer">' +
       '<p class="album-sleeve-label">' + esc(artist) + '</p>' +
       '<p class="album-sleeve-title"><em>' + esc(album) + '</em></p>' +
-      (contributor ? '<p class="album-sleeve-contributor">Added by ' + esc(contributor) + '</p>' : '') +
+      (contributor ? '<p class="album-sleeve-contributor">' + esc(contributor) + '</p>' : '') +
     '</div>' +
   '</div>';
 }
 
 function emptySleeveHtml() {
-  return '<div class="album-sleeve" style="opacity:0.25;cursor:default;">' +
+  return '<div class="album-sleeve" style="opacity:0.2;cursor:default;">' +
     '<div class="album-sleeve-image"><div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div></div>' +
   '</div>';
 }

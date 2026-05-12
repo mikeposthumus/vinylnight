@@ -1432,9 +1432,42 @@ textarea {
 
 .add-album-row {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr auto;
   gap: 1rem;
   align-items: end;
+}
+
+.hero-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.hero-member {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  transition: color 0.15s;
+}
+
+.hero-member:hover { color: var(--text); }
+
+.hero-member .avatar {
+  width: 26px;
+  height: 26px;
+  font-size: 0.65rem;
+}
+
+.hero-member-role {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-bright);
 }
 
 .art-preview {

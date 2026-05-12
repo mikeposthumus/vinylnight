@@ -46,6 +46,7 @@
             <h1 class="group-name" id="group-name">—</h1>
             <p class="group-location" id="group-location"></p>
             <p class="text-muted text-sm" id="group-description" style="max-width: 520px; line-height: 1.8;"></p>
+          <div class="hero-members" id="hero-members"></div>
           </div>
           <div class="group-stats" aria-label="Group statistics">
             <div class="stat-block">
@@ -74,7 +75,6 @@
 
       <div class="section-tabs">
         <button class="section-tab active" onclick="switchTab('now')">Now Playing</button>
-        <button class="section-tab" onclick="switchTab('members')">Members</button>
         <button class="section-tab" onclick="switchTab('archive')">Archive</button>
       </div>
 
@@ -87,26 +87,10 @@
         <div class="access-notice" style="display: none;" id="state-nonmember">
           <p><strong>This group is by invitation only.</strong> A founder must invite you to join.</p>
         </div>
-        <div class="access-notice" style="display: none; border-left-color: var(--accent-bright);" id="state-member">
-          <p><strong>You're a member.</strong> Add your album selection below.</p>
-        </div>
 
-        <div id="now-playing-content">
-          <p class="text-muted text-sm">Loading&hellip;</p>
-        </div>
-
-        <div id="this-season-wrap"></div>
-
-      </div>
-
-      <!-- ── MEMBERS ────────────────────────────────────────────── -->
-      <div class="tab-panel" id="tab-members">
-
-        <!-- Invite section — rendered by JS for founders only -->
-        <div id="invite-section" style="display: none; margin-bottom: 2rem;">
-          <div id="invite-form-wrap">
-            <button class="btn btn-outline" id="invite-toggle-btn" onclick="toggleInviteForm()">Invite Member</button>
-          </div>
+        <!-- Invite section — founders only, rendered by JS -->
+        <div id="invite-section" style="display: none; margin-bottom: 1.5rem;">
+          <button class="btn btn-outline" style="font-size:0.78rem;" onclick="toggleInviteForm()">Invite Member</button>
           <div id="invite-form" style="display: none; margin-top: 1rem; max-width: 420px;">
             <div id="invite-error" class="form-hint" style="color: var(--accent-bright); display: none; margin-bottom: 0.75rem;"></div>
             <div style="display: flex; gap: 0.75rem; align-items: flex-end;">
@@ -121,14 +105,11 @@
           </div>
         </div>
 
-        <div class="section-header mb-3">
-          <h2>Members</h2>
-          <span class="text-xs text-muted" id="member-count-label"></span>
-        </div>
-
-        <div class="members-grid" id="members-grid">
+        <div id="now-playing-content">
           <p class="text-muted text-sm">Loading&hellip;</p>
         </div>
+
+        <div id="this-season-wrap"></div>
 
       </div>
 

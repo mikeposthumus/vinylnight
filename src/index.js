@@ -311,32 +311,41 @@ async function handleGetGroup(request, env, path) {
   const group = await env.DB.prepare('SELECT * FROM groups WHERE slug = ?').bind(slug).first();
   if (!group) return json({ error: 'Group not found' }, 404);
 
-  const members = await env.DB.prepare(`
-    SELECT u.id, u.username, u.avatar_url, gm.role, gm.joined_at
-    FROM group_members gm
-    JOIN users u ON u.id = gm.user_id
-    WHERE gm.group_id = ? AND gm.status = 'active'
-    ORDER BY gm.joined_at
-  `).bind(group.id).all();
+  const [members, genres, seasons, vinylRow] = await Promise.all([
+    env.DB.prepare(`
+      SELECT u.id, u.username, u.avatar_url, gm.role, gm.joined_at
+      FROM group_members gm
+      JOIN users u ON u.id = gm.user_id
+      WHERE gm.group_id = ? AND gm.status = 'active'
+      ORDER BY gm.joined_at
+    `).bind(group.id).all(),
 
-  const genres = await env.DB.prepare(
-    'SELECT genre FROM group_genres WHERE group_id = ?'
-  ).bind(group.id).all();
+    env.DB.prepare('SELECT genre FROM group_genres WHERE group_id = ?').bind(group.id).all(),
 
-  const seasons = await env.DB.prepare(`
-    SELECT s.*, COUNT(e.id) AS episode_count
-    FROM seasons s
-    LEFT JOIN episodes e ON e.season_id = s.id
-    WHERE s.group_id = ?
-    GROUP BY s.id
-    ORDER BY s.number DESC
-  `).bind(group.id).all();
+    env.DB.prepare(`
+      SELECT s.*, COUNT(e.id) AS episode_count
+      FROM seasons s
+      LEFT JOIN episodes e ON e.season_id = s.id
+      WHERE s.group_id = ?
+      GROUP BY s.id
+      ORDER BY s.number DESC
+    `).bind(group.id).all(),
+
+    env.DB.prepare(`
+      SELECT COUNT(ev.id) AS count
+      FROM episode_vinyls ev
+      JOIN episodes e ON e.id = ev.episode_id
+      JOIN seasons s ON s.id = e.season_id
+      WHERE s.group_id = ?
+    `).bind(group.id).first(),
+  ]);
 
   return json({
     group,
-    members: members.results,
-    genres: genres.results.map(r => r.genre),
-    seasons: seasons.results,
+    members:     members.results,
+    genres:      genres.results.map(r => r.genre),
+    seasons:     seasons.results,
+    vinyl_count: vinylRow?.count || 0,
   });
 }
 
@@ -521,26 +530,51 @@ async function handleAddVinyl(request, env, path) {
   if (!user) return json({ error: 'Unauthorized' }, 401);
 
   const episodeId = path.split('/')[3];
-  const episode = await env.DB.prepare(
-    "SELECT id FROM episodes WHERE id = ? AND status IN ('current', 'upcoming')"
-  ).bind(episodeId).first();
+  const episode = await env.DB.prepare(`
+    SELECT e.id, s.group_id FROM episodes e
+    JOIN seasons s ON s.id = e.season_id
+    WHERE e.id = ? AND e.status IN ('current', 'upcoming')
+  `).bind(episodeId).first();
   if (!episode) return json({ error: 'Episode not found or not open' }, 404);
 
+  const membership = await env.DB.prepare(
+    "SELECT id FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"
+  ).bind(episode.group_id, user.id).first();
+  if (!membership) return json({ error: 'Not a member of this group' }, 403);
+
   const body = await parseBody(request);
-  const { artist, album_title, art_url } = body ?? {};
+  const { artist, album_title, art_url, contributor_username } = body ?? {};
   if (!artist || !album_title) return json({ error: 'artist and album_title are required' }, 400);
+
+  let contributedBy   = user.id;
+  let contributorName = user.username;
+
+  if (contributor_username && contributor_username !== user.username) {
+    const contrib = await env.DB.prepare(
+      'SELECT id, username FROM users WHERE username = ?'
+    ).bind(contributor_username).first();
+    if (!contrib) return json({ error: 'Contributor not found' }, 404);
+
+    const contribMember = await env.DB.prepare(
+      "SELECT id FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"
+    ).bind(episode.group_id, contrib.id).first();
+    if (!contribMember) return json({ error: 'Contributor is not a member of this group' }, 400);
+
+    contributedBy   = contrib.id;
+    contributorName = contrib.username;
+  }
 
   const existing = await env.DB.prepare(
     'SELECT id FROM episode_vinyls WHERE episode_id = ? AND contributed_by = ?'
-  ).bind(episodeId, user.id).first();
-  if (existing) return json({ error: 'You already added a vinyl for this episode' }, 409);
+  ).bind(episodeId, contributedBy).first();
+  if (existing) return json({ error: 'This member already has a vinyl for this episode' }, 409);
 
   const id = crypto.randomUUID();
   await env.DB.prepare(
     'INSERT INTO episode_vinyls (id, episode_id, contributed_by, artist, album_title, art_url) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(id, episodeId, user.id, artist, album_title, art_url ?? null).run();
+  ).bind(id, episodeId, contributedBy, artist, album_title, art_url ?? null).run();
 
-  return json({ id, artist, album_title, contributor_username: user.username }, 201);
+  return json({ id, artist, album_title, contributor_username: contributorName }, 201);
 }
 
 async function handleInvite(request, env, path) {
