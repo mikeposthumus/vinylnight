@@ -911,6 +911,8 @@ var searchTimer   = null;
 var searchResults = [];
 var sortField     = 'season_number';
 var sortDir       = 'desc';
+var searchPage    = 0;
+var SEARCH_PAGE_SIZE = 20;
 
 var SORT_COLS = [
   { field: 'album_title',         label: 'Album' },
@@ -944,6 +946,7 @@ async function runVinylSearch(q) {
     var res  = await fetch('/api/groups/' + GROUP_SLUG + '/search?q=' + encodeURIComponent(q));
     var data = await res.json();
     searchResults = data.results || [];
+    searchPage    = 0;
 
     if (!searchResults.length) {
       resultsEl.innerHTML = '<p class="search-empty">No results for &ldquo;' + esc(q) + '&rdquo;</p>';
@@ -963,7 +966,15 @@ function setSearchSort(field) {
     sortField = field;
     sortDir   = 'asc';
   }
+  searchPage = 0;
   renderSearchResults();
+}
+
+function setSearchPage(page) {
+  searchPage = page;
+  renderSearchResults();
+  var el = document.getElementById('vinyl-search-results');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function renderSearchResults() {
@@ -973,7 +984,6 @@ function renderSearchResults() {
   var sorted = searchResults.slice().sort(function(a, b) {
     var av, bv;
     if (sortField === 'season_number') {
-      /* secondary sort by episode within a season */
       av = (a.season_number || 0) * 1000 + (a.episode_number || 0);
       bv = (b.season_number || 0) * 1000 + (b.episode_number || 0);
     } else {
@@ -984,6 +994,13 @@ function renderSearchResults() {
     if (av > bv) return sortDir === 'asc' ? 1  : -1;
     return 0;
   });
+
+  var total      = sorted.length;
+  var totalPages = Math.ceil(total / SEARCH_PAGE_SIZE);
+  var page       = Math.min(searchPage, totalPages - 1);
+  var start      = page * SEARCH_PAGE_SIZE;
+  var end        = Math.min(start + SEARCH_PAGE_SIZE, total);
+  var pageSlice  = sorted.slice(start, end);
 
   var arrow = sortDir === 'asc' ? ' &#8593;' : ' &#8595;';
 
@@ -997,9 +1014,10 @@ function renderSearchResults() {
           c.label + (active ? arrow : '') +
         '</button>';
       }).join('') +
+      '<span class="search-sort-count">' + (start + 1) + '&ndash;' + end + ' of ' + total + '</span>' +
     '</div>';
 
-  var rows = sorted.map(function(v) {
+  var rows = pageSlice.map(function(v) {
     var artHtml = v.art_url
       ? '<img src="' + esc(v.art_url) + '" alt="' + esc(v.artist) + '">'
       : '<div class="search-result-art-placeholder"></div>';
@@ -1016,7 +1034,23 @@ function renderSearchResults() {
     '</div>';
   }).join('');
 
-  resultsEl.innerHTML = sortBar + '<div class="search-results">' + rows + '</div>';
+  var pagination = '';
+  if (totalPages > 1) {
+    var btns = '';
+    if (page > 0) {
+      btns += '<button class="search-page-btn" onclick="setSearchPage(' + (page - 1) + ')">&larr;</button>';
+    }
+    for (var i = 0; i < totalPages; i++) {
+      btns += '<button class="search-page-btn' + (i === page ? ' active' : '') + '"' +
+        ' onclick="setSearchPage(' + i + ')">' + (i + 1) + '</button>';
+    }
+    if (page < totalPages - 1) {
+      btns += '<button class="search-page-btn" onclick="setSearchPage(' + (page + 1) + ')">&rarr;</button>';
+    }
+    pagination = '<div class="search-pagination">' + btns + '</div>';
+  }
+
+  resultsEl.innerHTML = sortBar + '<div class="search-results">' + rows + '</div>' + pagination;
 }
 
 function clearVinylSearch() {
@@ -1025,8 +1059,9 @@ function clearVinylSearch() {
   var clearBtn = document.getElementById('vinyl-search-clear');
   if (clearBtn) clearBtn.style.display = 'none';
   searchResults = [];
-  sortField = 'season_number';
-  sortDir   = 'desc';
+  sortField  = 'season_number';
+  sortDir    = 'desc';
+  searchPage = 0;
   var resultsEl = document.getElementById('vinyl-search-results');
   if (resultsEl) { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; }
 }

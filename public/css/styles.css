@@ -1733,6 +1733,41 @@ textarea {
   border-bottom: 1px solid var(--accent);
 }
 
+.search-sort-count {
+  margin-left: auto;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.search-pagination {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-top: none;
+  background: var(--surface);
+}
+
+.search-page-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-family: 'Inter', sans-serif;
+  color: var(--text-muted);
+  padding: 0.2rem 0.55rem;
+  line-height: 1.6;
+  transition: color 0.12s;
+}
+
+.search-page-btn:hover { color: var(--text); }
+
+.search-page-btn.active {
+  color: var(--text);
+  border-bottom: 1px solid var(--accent);
+}
+
 @media (max-width: 768px) {
   .group-hero-inner { grid-template-columns: 1fr; gap: 1.5rem; align-items: start; }
   .group-stats { flex-wrap: wrap; }

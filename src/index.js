@@ -462,7 +462,7 @@ async function handleGroupSearch(request, env, path, url) {
     WHERE s.group_id = ?
       AND (LOWER(v.artist) LIKE ? OR LOWER(v.album_title) LIKE ? OR LOWER(u.username) LIKE ?)
     ORDER BY s.number DESC, e.number DESC
-    LIMIT 30
+    LIMIT 99
   `).bind(group.id, like, like, like).all();
 
   return json({ results: rows.results });
