@@ -513,6 +513,21 @@ ul { list-style: none; }
   margin-top: 0.25rem;
 }
 
+.vinyl-del-btn {
+  display: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: 0.35rem;
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  text-align: left;
+  transition: color 0.15s;
+}
+.vinyl-del-btn:hover { color: var(--accent-bright); }
+
 /* ── Forms ──────────────────────────────────────────────────── */
 
 .form-group {
@@ -539,6 +554,7 @@ input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="url"],
+input[type="number"],
 textarea,
 select {
   width: 100%;
@@ -1425,7 +1441,7 @@ textarea {
 
 .add-album-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr 5rem auto;
   gap: 1rem;
   align-items: end;
 }

@@ -123,7 +123,7 @@ function renderNowPlaying(season, episodes, vinyls) {
 
   /* Only add empty sleeve if it stays on the current row */
   var albumsHtml = epVinyls.map(function(v) {
-    return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url, v.id);
+    return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url, v.id, v.play_order, true);
   }).join('');
   if (epVinyls.length % 3 !== 0) albumsHtml += emptySleeveHtml();
 
@@ -243,7 +243,7 @@ function renderNowPlaying(season, episodes, vinyls) {
           '</div>' +
           '<div><label for="add-artist">Artist</label><input type="text" id="add-artist" placeholder="Artist name" oninput="fetchAlbumArt()"></div>' +
           '<div><label for="add-album-title">Album</label><input type="text" id="add-album-title" placeholder="Album title" oninput="fetchAlbumArt()"></div>' +
-          '<div><label for="add-play-order">Order</label><input type="number" id="add-play-order" placeholder="#" min="1" max="99" style="width:5rem;"></div>' +
+          '<div><label for="add-play-order">Order</label><input type="number" id="add-play-order" placeholder="#" min="1" max="99"></div>' +
           '<div style="display:flex;align-items:flex-end;gap:0.75rem;">' +
             '<div class="art-preview" id="art-preview" title="Album art preview"><div class="art-preview-icon"></div></div>' +
             '<button type="button" class="btn btn-primary" onclick="addAlbum()">Add</button>' +
@@ -273,7 +273,7 @@ function renderThisSeason(season, episodes, vinylsByEp) {
     episodeSeasonMap[ep.id] = { seasonId: season.id, isArchive: false };
 
     var albumsHtml = epVinyls.map(function(v) {
-      return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url, v.id);
+      return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url, v.id, v.play_order);
     }).join('');
 
     var albumTags = epVinyls.map(function(v) {
@@ -429,7 +429,7 @@ async function loadSeasonEpisodes(seasonId) {
     episodeSeasonMap[ep.id] = { seasonId: seasonId, isArchive: true };
 
     var albumsHtml = epVinyls.map(function(v) {
-      return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url, v.id);
+      return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url, v.id, v.play_order);
     }).join('');
 
     var albumTags = epVinyls.map(function(v) {
@@ -534,6 +534,8 @@ function checkMembership() {
     if (contribSel && currentUser) contribSel.value = currentUser.username;
     /* Show edit pencils on all completed episodes */
     document.querySelectorAll('.ep-edit-btn').forEach(function(btn) { btn.style.display = ''; });
+    /* Show remove buttons on current-episode album sleeves */
+    document.querySelectorAll('.vinyl-del-btn').forEach(function(btn) { btn.style.display = ''; });
   } else {
     document.getElementById('state-nonmember').style.display = '';
   }
@@ -841,6 +843,19 @@ async function addAlbum() {
   }
 }
 
+async function deleteVinyl(vinylId, btn) {
+  if (!confirm('Remove this album from the episode?')) return;
+  btn.disabled = true;
+  var res = await fetch('/api/vinyls/' + vinylId, { method: 'DELETE' });
+  if (res.ok) {
+    await loadCurrentSeason();
+  } else {
+    btn.disabled = false;
+    var err = await res.json();
+    alert(err.error || 'Could not remove album.');
+  }
+}
+
 /* ── Invite member (founders only) ─────────────────────────── */
 function toggleInviteForm() {
   var form    = document.getElementById('invite-form');
@@ -1076,19 +1091,24 @@ function clearVinylSearch() {
 }
 
 /* ── Helpers ────────────────────────────────────────────────── */
-function albumSleeveHtml(artist, album, contributor, artUrl, vinylId) {
+function albumSleeveHtml(artist, album, contributor, artUrl, vinylId, playOrder, canDelete) {
   var imgHtml = artUrl
     ? '<img src="' + esc(artUrl) + '" alt="' + esc(artist) + ' — ' + esc(album) + '" style="width:100%;height:100%;object-fit:cover;display:block;">'
     : '<div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>';
   var clickable = !artUrl && vinylId;
   var extra = (clickable ? ' onclick="fetchSleeveArt(this)" style="cursor:pointer;" title="Click to load art"' : '') +
               (vinylId   ? ' data-vinyl-id="' + esc(vinylId) + '"' : '');
+  var delBtn = (canDelete && vinylId)
+    ? '<button class="vinyl-del-btn" onclick="deleteVinyl(\'' + esc(vinylId) + '\', this)" title="Remove album">Remove</button>'
+    : '';
   return '<div class="album-sleeve"' + extra + ' data-artist="' + esc(artist) + '" data-album="' + esc(album) + '">' +
     '<div class="album-sleeve-image">' + imgHtml + '</div>' +
     '<div class="album-sleeve-footer">' +
+      (playOrder ? '<p class="album-sleeve-number">#' + playOrder + '</p>' : '') +
       '<p class="album-sleeve-label">' + esc(artist) + '</p>' +
       '<p class="album-sleeve-title"><em>' + esc(album) + '</em></p>' +
       (contributor ? '<p class="album-sleeve-contributor">' + esc(contributor) + '</p>' : '') +
+      delBtn +
     '</div>' +
   '</div>';
 }

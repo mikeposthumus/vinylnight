@@ -80,6 +80,7 @@ async function route(request, url, env) {
   if (path.match(/^\/api\/episodes\/[^/]+\/attendees$/)   && method === 'POST') return handleSetAttendees(request, env, path);
   if (path.match(/^\/api\/episodes\/[^/]+\/guests$/)      && method === 'POST') return handleAddGuest(request, env, path);
 
+  if (path.match(/^\/api\/vinyls\/[^/]+$/)                 && method === 'DELETE') return handleDeleteVinyl(request, env, path);
   if (path.match(/^\/api\/vinyls\/[^/]+\/art$/)           && method === 'POST') return handleFetchVinylArt(request, env, path);
 
   return json({ error: 'Not found' }, 404);
@@ -779,6 +780,32 @@ async function handleAddVinyl(request, env, path) {
   ).bind(id, episodeId, contributedBy, artist, album_title, art_url ?? null, playOrder).run();
 
   return json({ id, artist, album_title, contributor_username: contributorName, play_order: playOrder }, 201);
+}
+
+async function handleDeleteVinyl(request, env, path) {
+  const user = await requireAuth(request, env);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  const vinylId = path.split('/')[3];
+  const vinyl = await env.DB.prepare(`
+    SELECT ev.id, ev.episode_id, e.status, s.group_id
+    FROM episode_vinyls ev
+    JOIN episodes e ON e.id = ev.episode_id
+    JOIN seasons s ON s.id = e.season_id
+    WHERE ev.id = ?
+  `).bind(vinylId).first();
+  if (!vinyl) return json({ error: 'Not found' }, 404);
+  if (!['current', 'upcoming'].includes(vinyl.status)) {
+    return json({ error: 'Cannot delete from a completed episode' }, 403);
+  }
+
+  const membership = await env.DB.prepare(
+    "SELECT id FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"
+  ).bind(vinyl.group_id, user.id).first();
+  if (!membership) return json({ error: 'Not a member of this group' }, 403);
+
+  await env.DB.prepare('DELETE FROM episode_vinyls WHERE id = ?').bind(vinylId).run();
+  return json({ ok: true });
 }
 
 async function handleFetchVinylArt(request, env, path) {
