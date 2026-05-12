@@ -63,6 +63,7 @@ async function route(request, url, env) {
   if (path.match(/^\/api\/episodes\/[^/]+$/)              && method === 'PUT')  return handleUpdateEpisode(request, env, path);
   if (path.match(/^\/api\/episodes\/[^/]+\/vinyls$/)      && method === 'POST') return handleAddVinyl(request, env, path);
   if (path.match(/^\/api\/episodes\/[^/]+\/attendees$/)   && method === 'POST') return handleSetAttendees(request, env, path);
+  if (path.match(/^\/api\/episodes\/[^/]+\/guests$/)      && method === 'POST') return handleAddGuest(request, env, path);
 
   return json({ error: 'Not found' }, 404);
 }
@@ -153,7 +154,7 @@ async function handleMe(request, env) {
       JOIN seasons s ON s.id = e.season_id
       JOIN groups g ON g.id = s.group_id
       WHERE v.contributed_by = ?
-      ORDER BY v.added_at DESC
+      ORDER BY e.date DESC NULLS LAST, v.added_at DESC
       LIMIT 9
     `).bind(user.id).all(),
   ]);
@@ -255,7 +256,7 @@ async function handleGetUser(request, env, path) {
       JOIN seasons s ON s.id = e.season_id
       JOIN groups g ON g.id = s.group_id
       WHERE v.contributed_by = ?
-      ORDER BY v.added_at DESC
+      ORDER BY e.date DESC NULLS LAST, v.added_at DESC
       LIMIT 9
     `).bind(user.id).all(),
   ]);
@@ -285,7 +286,7 @@ async function handleUserVinyls(request, env, path, url) {
     JOIN seasons s ON s.id = e.season_id
     JOIN groups g ON g.id = s.group_id
     WHERE v.contributed_by = ?
-    ORDER BY v.added_at DESC
+    ORDER BY e.date DESC NULLS LAST, v.added_at DESC
     LIMIT ? OFFSET ?
   `).bind(user.id, PAGE, offset).all();
 
@@ -523,10 +524,14 @@ async function handleSetAttendees(request, env, path) {
   const { usernames } = body ?? {};
   if (!Array.isArray(usernames)) return json({ error: 'usernames array required' }, 400);
 
-  await env.DB.prepare('DELETE FROM episode_attendees WHERE episode_id = ?').bind(episodeId).run();
+  // Only replace non-guest attendees; guest attendees are managed via the guests endpoint
+  await env.DB.prepare(`
+    DELETE FROM episode_attendees WHERE episode_id = ?
+    AND user_id IN (SELECT id FROM users WHERE is_guest = 0)
+  `).bind(episodeId).run();
 
   for (const username of usernames) {
-    const attendee = await env.DB.prepare('SELECT id FROM users WHERE username = ?').bind(username).first();
+    const attendee = await env.DB.prepare('SELECT id FROM users WHERE username = ? AND is_guest = 0').bind(username).first();
     if (attendee) {
       await env.DB.prepare(
         'INSERT OR IGNORE INTO episode_attendees (episode_id, user_id) VALUES (?, ?)'
@@ -535,6 +540,50 @@ async function handleSetAttendees(request, env, path) {
   }
 
   return json({ ok: true });
+}
+
+async function handleAddGuest(request, env, path) {
+  const user = await requireAuth(request, env);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  const episodeId = path.split('/')[3];
+  const episode = await env.DB.prepare(`
+    SELECT e.id, s.group_id FROM episodes e
+    JOIN seasons s ON s.id = e.season_id WHERE e.id = ?
+  `).bind(episodeId).first();
+  if (!episode) return json({ error: 'Episode not found' }, 404);
+
+  const membership = await env.DB.prepare(
+    "SELECT id FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"
+  ).bind(episode.group_id, user.id).first();
+  if (!membership) return json({ error: 'Not a member' }, 403);
+
+  const body = await parseBody(request);
+  const name = (body?.name ?? '').trim();
+  if (!name) return json({ error: 'name is required' }, 400);
+
+  // Sanitize name into a valid username
+  let base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 25) || 'guest';
+  let username = base;
+  const clash = await env.DB.prepare('SELECT id FROM users WHERE username = ?').bind(username).first();
+  if (clash) {
+    const suffix = Array.from(crypto.getRandomValues(new Uint8Array(3)))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
+    username = base + '-' + suffix;
+  }
+
+  const guestId    = crypto.randomUUID();
+  const fakeEmail  = 'guest-' + guestId + '@vinylnight.guest';
+
+  await env.DB.prepare(
+    'INSERT INTO users (id, username, email, password_hash, is_guest) VALUES (?, ?, ?, ?, 1)'
+  ).bind(guestId, username, fakeEmail, 'guest').run();
+
+  await env.DB.prepare(
+    'INSERT OR IGNORE INTO episode_attendees (episode_id, user_id) VALUES (?, ?)'
+  ).bind(episodeId, guestId).run();
+
+  return json({ id: guestId, username, name }, 201);
 }
 
 async function handleAddVinyl(request, env, path) {
@@ -563,14 +612,16 @@ async function handleAddVinyl(request, env, path) {
 
   if (contributor_username && contributor_username !== user.username) {
     const contrib = await env.DB.prepare(
-      'SELECT id, username FROM users WHERE username = ?'
+      'SELECT id, username, is_guest FROM users WHERE username = ?'
     ).bind(contributor_username).first();
     if (!contrib) return json({ error: 'Contributor not found' }, 404);
 
-    const contribMember = await env.DB.prepare(
-      "SELECT id FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"
-    ).bind(episode.group_id, contrib.id).first();
-    if (!contribMember) return json({ error: 'Contributor is not a member of this group' }, 400);
+    if (!contrib.is_guest) {
+      const contribMember = await env.DB.prepare(
+        "SELECT id FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"
+      ).bind(episode.group_id, contrib.id).first();
+      if (!contribMember) return json({ error: 'Contributor is not a member of this group' }, 400);
+    }
 
     contributedBy   = contrib.id;
     contributorName = contrib.username;

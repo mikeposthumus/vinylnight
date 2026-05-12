@@ -6,6 +6,7 @@ var isMember = false;
 var currentEpisodeId = null;
 var currentEpisodeNumber = null;
 var currentSeasonId = null;
+var episodeSeasonMap = {};
 
 /* ── Boot ──────────────────────────────────────────────────── */
 (async function init() {
@@ -131,6 +132,8 @@ function renderNowPlaying(season, episodes, vinyls) {
 
   /* Episode editor */
   var members = groupData.members || [];
+  var memberUsernames = members.map(function(m) { return m.username; });
+  var guestAttendees  = attendeeList.filter(function(a) { return memberUsernames.indexOf(a) === -1; });
 
   var hostOptions = '<option value="">— not set —</option>' +
     members.map(function(m) {
@@ -146,11 +149,37 @@ function renderNowPlaying(season, episodes, vinyls) {
     '</label>';
   }).join('');
 
-  /* Contributor dropdown for add-album form */
-  var contribOptions = '<option value="">Select member…</option>' +
+  /* Guest badges + add-guest form for the episode editor */
+  var guestBadges = guestAttendees.map(function(g) {
+    return '<span class="tag">' + esc(g) + '</span>';
+  }).join(' ');
+
+  var guestSection =
+    '<div class="form-group" style="margin-bottom:1.25rem;">' +
+      '<label>Guests</label>' +
+      (guestBadges ? '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.6rem;">' + guestBadges + '</div>' : '') +
+      '<div id="add-guest-form" style="display:none;margin-bottom:0.5rem;">' +
+        '<div style="display:flex;gap:0.75rem;align-items:flex-end;">' +
+          '<div style="flex:1;"><input type="text" id="guest-name-input" placeholder="Guest name" style="margin:0;" onkeydown="if(event.key===\'Enter\')submitAddGuest()"></div>' +
+          '<button type="button" class="btn btn-outline" style="font-size:0.78rem;" onclick="submitAddGuest()">Add</button>' +
+          '<button type="button" class="btn btn-ghost" style="font-size:0.78rem;" onclick="toggleAddGuestForm()">Cancel</button>' +
+        '</div>' +
+      '</div>' +
+      '<button id="add-guest-btn" type="button" class="btn btn-ghost" style="font-size:0.78rem;" onclick="toggleAddGuestForm()">+ Add a Guest</button>' +
+    '</div>';
+
+  /* Contributor dropdown — members first, then guests */
+  var contribOptions = '<option value="">Select contributor…</option>' +
     members.map(function(m) {
       return '<option value="' + esc(m.username) + '">' + esc(m.username) + '</option>';
-    }).join('');
+    }).join('') +
+    (guestAttendees.length
+      ? '<optgroup label="Guests">' +
+          guestAttendees.map(function(g) {
+            return '<option value="' + esc(g) + '">' + esc(g) + '</option>';
+          }).join('') +
+        '</optgroup>'
+      : '');
 
   el.innerHTML =
     '<div class="now-playing-episode">' +
@@ -183,6 +212,7 @@ function renderNowPlaying(season, episodes, vinyls) {
             '<div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;padding-top:0.25rem;">' + attendeeCheckboxes + '</div>' +
           '</div>'
         : '') +
+        guestSection +
         '<div style="display:flex;gap:0.75rem;">' +
           '<button class="btn btn-primary" onclick="saveEpisodeDetails()">Save</button>' +
           '<button class="btn btn-ghost" onclick="toggleEpisodeEditor()">Cancel</button>' +
@@ -215,33 +245,84 @@ function renderNowPlaying(season, episodes, vinyls) {
 }
 
 function renderThisSeason(season, episodes, vinylsByEp) {
-  var wrap = document.getElementById('this-season-wrap');
+  var wrap    = document.getElementById('this-season-wrap');
+  var members = groupData.members || [];
   if (!episodes.length) { wrap.innerHTML = ''; return; }
 
   var html = episodes.map(function(ep) {
-    var epVinyls  = vinylsByEp[ep.id] || [];
-    var dateLabel = ep.date ? monthLabel(ep.date) : '';
-    var badge     = ep.status === 'upcoming'
+    var epVinyls     = vinylsByEp[ep.id] || [];
+    var dateLabel    = ep.date ? monthLabel(ep.date) : '';
+    var attendeeList = ep.attendees || [];
+    var badge        = ep.status === 'upcoming'
       ? '<span class="tag">Upcoming</span>'
       : '<span class="tag">Completed</span>';
+
+    episodeSeasonMap[ep.id] = { seasonId: season.id, isArchive: false };
 
     var albumsHtml = epVinyls.map(function(v) {
       return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url);
     }).join('');
 
+    var albumsText = epVinyls.map(function(v) {
+      return esc(v.artist) + ' &mdash; <em>' + esc(v.album_title) + '</em>';
+    }).join(' &middot; ');
+
+    var hostLine = ep.host_username
+      ? '<p class="text-xs text-muted" style="margin-top:0.2rem;">Hosted by ' + esc(ep.host_username) +
+        (attendeeList.length ? ' &middot; ' + attendeeList.map(esc).join(', ') : '') + '</p>'
+      : (attendeeList.length
+          ? '<p class="text-xs text-muted" style="margin-top:0.2rem;">' + attendeeList.map(esc).join(', ') + '</p>'
+          : '');
+
+    var hostOptions = '<option value="">— not set —</option>' +
+      members.map(function(m) {
+        var sel = ep.host_username === m.username ? ' selected' : '';
+        return '<option value="' + esc(m.username) + '"' + sel + '>' + esc(m.username) + '</option>';
+      }).join('');
+
+    var attendeeCheckboxes = members.map(function(m) {
+      var chk = attendeeList.indexOf(m.username) !== -1 ? ' checked' : '';
+      return '<label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">' +
+        '<input type="checkbox" name="ep-att-' + ep.id + '" value="' + esc(m.username) + '"' + chk + '> ' +
+        '<span style="font-size:0.88rem;">' + esc(m.username) + '</span>' +
+      '</label>';
+    }).join('');
+
+    var inlineEditor =
+      '<div id="ep-editor-' + ep.id + '" style="display:none;padding:1.25rem;background:var(--surface-raised);border:1px solid var(--border-subtle);margin-bottom:1.25rem;">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">' +
+          '<div class="form-group" style="margin-bottom:0;"><label>Date</label>' +
+            '<input type="date" id="ep-date-' + ep.id + '" value="' + esc(ep.date || '') + '"></div>' +
+          '<div class="form-group" style="margin-bottom:0;"><label>Host</label>' +
+            '<select id="ep-host-' + ep.id + '">' + hostOptions + '</select></div>' +
+        '</div>' +
+        (members.length
+          ? '<div class="form-group" style="margin-bottom:1.25rem;"><label>Who attended?</label>' +
+              '<div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;padding-top:0.25rem;">' + attendeeCheckboxes + '</div></div>'
+          : '') +
+        '<div style="display:flex;gap:0.75rem;">' +
+          '<button class="btn btn-primary" style="font-size:0.78rem;" onclick="saveEpInline(\'' + ep.id + '\')">Save</button>' +
+          '<button class="btn btn-ghost" style="font-size:0.78rem;" onclick="toggleEpInlineEditor(\'' + ep.id + '\')">Cancel</button>' +
+        '</div>' +
+      '</div>';
+
     return '<details class="season">' +
       '<summary>' +
-        '<div>' +
-          '<span class="season-title">Episode ' + ep.number +
-            (dateLabel ? ' &mdash; ' + dateLabel : '') + '</span>' +
-          '<p class="text-xs text-muted mt-1">Hosted by ' + esc(ep.host_username || 'TBD') +
-            (ep.attendee_count ? ' &middot; ' + ep.attendee_count + ' attended' : '') + '</p>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="display:flex;align-items:baseline;gap:0.75rem;">' +
+            '<span class="season-title">Episode ' + ep.number +
+              (dateLabel ? ' &mdash; ' + dateLabel : '') + '</span>' +
+          '</div>' +
+          hostLine +
+          (albumsText ? '<p class="text-xs" style="margin-top:0.3rem;color:var(--text-muted);">' + albumsText + '</p>' : '') +
         '</div>' +
-        '<div style="display:flex;align-items:center;gap:1.5rem;">' +
+        '<div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">' +
+          '<button class="ep-edit-btn" title="Edit episode" style="' + (isMember ? '' : 'display:none;') + 'background:none;border:none;cursor:pointer;padding:0.25rem 0.5rem;font-size:1rem;color:var(--text-muted);" onclick="event.stopPropagation();toggleEpInlineEditor(\'' + ep.id + '\')">&#9998;</button>' +
           badge + '<span class="season-chevron">&#9656;</span>' +
         '</div>' +
       '</summary>' +
-      '<div style="padding-top:1.5rem;">' +
+      '<div style="padding-top:1.25rem;padding-left:1.5rem;">' +
+        inlineEditor +
         (albumsHtml
           ? '<div class="episode-album-grid">' + albumsHtml + '</div>'
           : '<p class="text-muted text-sm">No albums recorded.</p>') +
@@ -315,24 +396,77 @@ async function loadSeasonEpisodes(seasonId) {
   var season = groupData.seasons.find(function(s) { return s.id === seasonId; });
   var sNum   = season ? season.number : '?';
 
+  var members = groupData.members || [];
+
   var html = episodes.map(function(ep) {
-    var epVinyls  = vinylsByEp[ep.id] || [];
-    var dateLabel = ep.date ? monthLabel(ep.date) : '';
+    var epVinyls     = vinylsByEp[ep.id] || [];
+    var dateLabel    = ep.date ? monthLabel(ep.date) : '';
+    var attendeeList = ep.attendees || [];
+
+    episodeSeasonMap[ep.id] = { seasonId: seasonId, isArchive: true };
+
     var albumsHtml = epVinyls.map(function(v) {
       return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url);
     }).join('');
 
+    var albumsText = epVinyls.map(function(v) {
+      return esc(v.artist) + ' &mdash; <em>' + esc(v.album_title) + '</em>';
+    }).join(' &middot; ');
+
+    var hostLine = ep.host_username
+      ? '<p class="text-xs text-muted" style="margin-top:0.2rem;">Hosted by ' + esc(ep.host_username) +
+        (attendeeList.length ? ' &middot; ' + attendeeList.map(esc).join(', ') : '') + '</p>'
+      : (attendeeList.length
+          ? '<p class="text-xs text-muted" style="margin-top:0.2rem;">' + attendeeList.map(esc).join(', ') + '</p>'
+          : '');
+
+    var hostOptions = '<option value="">— not set —</option>' +
+      members.map(function(m) {
+        var sel = ep.host_username === m.username ? ' selected' : '';
+        return '<option value="' + esc(m.username) + '"' + sel + '>' + esc(m.username) + '</option>';
+      }).join('');
+
+    var attendeeCheckboxes = members.map(function(m) {
+      var chk = attendeeList.indexOf(m.username) !== -1 ? ' checked' : '';
+      return '<label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">' +
+        '<input type="checkbox" name="ep-att-' + ep.id + '" value="' + esc(m.username) + '"' + chk + '> ' +
+        '<span style="font-size:0.88rem;">' + esc(m.username) + '</span>' +
+      '</label>';
+    }).join('');
+
+    var inlineEditor =
+      '<div id="ep-editor-' + ep.id + '" style="display:none;padding:1.25rem;background:var(--surface-raised);border:1px solid var(--border-subtle);margin-bottom:1.25rem;">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">' +
+          '<div class="form-group" style="margin-bottom:0;"><label>Date</label>' +
+            '<input type="date" id="ep-date-' + ep.id + '" value="' + esc(ep.date || '') + '"></div>' +
+          '<div class="form-group" style="margin-bottom:0;"><label>Host</label>' +
+            '<select id="ep-host-' + ep.id + '">' + hostOptions + '</select></div>' +
+        '</div>' +
+        (members.length
+          ? '<div class="form-group" style="margin-bottom:1.25rem;"><label>Who attended?</label>' +
+              '<div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;padding-top:0.25rem;">' + attendeeCheckboxes + '</div></div>'
+          : '') +
+        '<div style="display:flex;gap:0.75rem;">' +
+          '<button class="btn btn-primary" style="font-size:0.78rem;" onclick="saveEpInline(\'' + ep.id + '\')">Save</button>' +
+          '<button class="btn btn-ghost" style="font-size:0.78rem;" onclick="toggleEpInlineEditor(\'' + ep.id + '\')">Cancel</button>' +
+        '</div>' +
+      '</div>';
+
     return '<details class="season">' +
       '<summary>' +
-        '<div>' +
+        '<div style="flex:1;min-width:0;">' +
           '<span class="season-title">Episode ' + ep.number +
             (dateLabel ? ' &mdash; ' + dateLabel : '') + '</span>' +
-          '<p class="text-xs text-muted mt-1">Hosted by ' + esc(ep.host_username || 'TBD') +
-            (ep.attendee_count ? ' &middot; ' + ep.attendee_count + ' attended' : '') + '</p>' +
+          hostLine +
+          (albumsText ? '<p class="text-xs" style="margin-top:0.3rem;color:var(--text-muted);">' + albumsText + '</p>' : '') +
         '</div>' +
-        '<span class="season-chevron">&#9656;</span>' +
+        '<div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">' +
+          '<button class="ep-edit-btn" title="Edit episode" style="' + (isMember ? '' : 'display:none;') + 'background:none;border:none;cursor:pointer;padding:0.25rem 0.5rem;font-size:1rem;color:var(--text-muted);" onclick="event.stopPropagation();toggleEpInlineEditor(\'' + ep.id + '\')">&#9998;</button>' +
+          '<span class="season-chevron">&#9656;</span>' +
+        '</div>' +
       '</summary>' +
-      '<div style="padding-top:1.5rem;">' +
+      '<div style="padding-top:1.25rem;padding-left:1.5rem;">' +
+        inlineEditor +
         (albumsHtml
           ? '<div class="episode-album-grid">' + albumsHtml + '</div>'
           : '<p class="text-muted text-sm">No albums recorded.</p>') +
@@ -364,6 +498,8 @@ function checkMembership() {
     /* Pre-select the logged-in user in the contributor dropdown */
     var contribSel = document.getElementById('add-contributor');
     if (contribSel && currentUser) contribSel.value = currentUser.username;
+    /* Show edit pencils on all completed episodes */
+    document.querySelectorAll('.ep-edit-btn').forEach(function(btn) { btn.style.display = ''; });
   } else {
     document.getElementById('state-nonmember').style.display = '';
   }
@@ -380,6 +516,91 @@ function toggleEpisodeEditor() {
   var ed = document.getElementById('episode-editor');
   if (!ed) return;
   ed.style.display = ed.style.display === 'none' ? '' : 'none';
+}
+
+function toggleAddGuestForm() {
+  var form = document.getElementById('add-guest-form');
+  var btn  = document.getElementById('add-guest-btn');
+  if (!form || !btn) return;
+  var isOpen = form.style.display !== 'none';
+  form.style.display = isOpen ? 'none' : '';
+  btn.style.display  = isOpen ? '' : 'none';
+  if (!isOpen) {
+    var inp = document.getElementById('guest-name-input');
+    if (inp) { inp.value = ''; inp.focus(); }
+  }
+}
+
+async function submitAddGuest() {
+  if (!currentEpisodeId) return;
+  var inp  = document.getElementById('guest-name-input');
+  var name = inp ? inp.value.trim() : '';
+  if (!name) return;
+
+  try {
+    var res = await fetch('/api/episodes/' + currentEpisodeId + '/guests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name }),
+    });
+    if (!res.ok) {
+      var err = await res.json();
+      alert(err.error || 'Could not add guest.');
+      return;
+    }
+    var editorWasOpen = (document.getElementById('episode-editor') || {}).style.display !== 'none';
+    await loadCurrentSeason();
+    if (editorWasOpen) {
+      var ed = document.getElementById('episode-editor');
+      if (ed) ed.style.display = '';
+    }
+  } catch (e) {
+    alert('Could not add guest.');
+  }
+}
+
+function toggleEpInlineEditor(epId) {
+  var ed = document.getElementById('ep-editor-' + epId);
+  if (!ed) return;
+  ed.style.display = ed.style.display === 'none' ? '' : 'none';
+}
+
+async function saveEpInline(epId) {
+  var dateEl    = document.getElementById('ep-date-' + epId);
+  var hostEl    = document.getElementById('ep-host-' + epId);
+  var checked   = document.querySelectorAll('[name="ep-att-' + epId + '"]:checked');
+  var attendees = Array.from(checked).map(function(b) { return b.value; });
+
+  try {
+    var results = await Promise.all([
+      fetch('/api/episodes/' + epId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date:          dateEl ? (dateEl.value || null) : null,
+          host_username: hostEl ? (hostEl.value || null) : null,
+        }),
+      }),
+      fetch('/api/episodes/' + epId + '/attendees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usernames: attendees }),
+      }),
+    ]);
+    if (!results[0].ok || !results[1].ok) { alert('Could not save changes.'); return; }
+
+    var info = episodeSeasonMap[epId];
+    if (info) {
+      if (info.isArchive) {
+        loadedSeasons[info.seasonId] = false;
+        loadSeasonEpisodes(info.seasonId);
+      } else {
+        loadCurrentSeason();
+      }
+    }
+  } catch(e) {
+    alert('Could not save changes.');
+  }
 }
 
 async function saveEpisodeDetails() {
@@ -445,12 +666,18 @@ function fetchAlbumArt() {
   artTimer = setTimeout(function() {
     preview.classList.add('loading');
     preview.innerHTML = '';
-    fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + album) + '&media=music&entity=album&limit=1')
+    fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + album) + '&media=music&entity=album&limit=5')
       .then(function(r) { return r.json(); })
       .then(function(data) {
         preview.classList.remove('loading');
         if (data.results && data.results.length) {
-          var art = data.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+          var target = album.toLowerCase();
+          var best = data.results.find(function(r) {
+            return (r.collectionName || '').toLowerCase() === target;
+          }) || data.results.find(function(r) {
+            return (r.collectionName || '').toLowerCase().indexOf(target) !== -1;
+          }) || data.results[0];
+          var art = best.artworkUrl100.replace('100x100bb', '600x600bb');
           preview.innerHTML = '<img src="' + art + '" alt="Album art">';
           preview.dataset.artUrl = art;
         } else {
@@ -551,11 +778,17 @@ function loadAlbumArtForContainer(container) {
     sleeve.dataset.artLoading = '1';
     var artist = sleeve.dataset.artist;
     var album  = sleeve.dataset.album;
-    fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + album) + '&media=music&entity=album&limit=1')
+    fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + album) + '&media=music&entity=album&limit=5')
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.results && data.results.length) {
-          var art = data.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+          var target = album.toLowerCase();
+          var best = data.results.find(function(r) {
+            return (r.collectionName || '').toLowerCase() === target;
+          }) || data.results.find(function(r) {
+            return (r.collectionName || '').toLowerCase().indexOf(target) !== -1;
+          }) || data.results[0];
+          var art = best.artworkUrl100.replace('100x100bb', '600x600bb');
           var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
           if (!placeholder) return;
           var img = document.createElement('img');

@@ -122,11 +122,17 @@ function loadArt(container) {
     sleeve.dataset.artLoading = '1';
     var artist = sleeve.dataset.artist;
     var album  = sleeve.dataset.album;
-    fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + album) + '&media=music&entity=album&limit=1')
+    fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + album) + '&media=music&entity=album&limit=5')
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (!d.results || !d.results.length) return;
-        var art = d.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+        var target = album.toLowerCase();
+        var best = d.results.find(function(r) {
+          return (r.collectionName || '').toLowerCase() === target;
+        }) || d.results.find(function(r) {
+          return (r.collectionName || '').toLowerCase().indexOf(target) !== -1;
+        }) || d.results[0];
+        var art = best.artworkUrl100.replace('100x100bb', '600x600bb');
         var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
         if (!placeholder) return;
         var img = document.createElement('img');
