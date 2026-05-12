@@ -91,17 +91,41 @@
         <!-- Invite section — founders only, rendered by JS -->
         <div id="invite-section" style="display: none; margin-bottom: 1.5rem;">
           <button class="btn btn-outline" style="font-size:0.78rem;" onclick="toggleInviteForm()">Invite Member</button>
-          <div id="invite-form" style="display: none; margin-top: 1rem; max-width: 420px;">
+          <div id="invite-form" style="display: none; margin-top: 1rem; max-width: 480px;">
             <div id="invite-error" class="form-hint" style="color: var(--accent-bright); display: none; margin-bottom: 0.75rem;"></div>
-            <div style="display: flex; gap: 0.75rem; align-items: flex-end;">
-              <div style="flex: 1;">
+            <div style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 160px;">
                 <label for="invite-username" style="margin-bottom: 0.4rem; display: block;">Username</label>
                 <input type="text" id="invite-username" placeholder="their-username" autocomplete="off">
+              </div>
+              <div>
+                <label for="invite-role" style="margin-bottom: 0.4rem; display: block;">Role</label>
+                <select id="invite-role">
+                  <option value="member">Member</option>
+                  <option value="founder">Founder</option>
+                </select>
               </div>
               <button type="button" class="btn btn-primary" onclick="sendInvite()">Send Invite</button>
               <button type="button" class="btn btn-ghost" onclick="toggleInviteForm()">Cancel</button>
             </div>
             <div id="invite-success" style="display: none; margin-top: 0.75rem;" class="form-hint"></div>
+          </div>
+        </div>
+
+        <!-- Danger zone — founders only -->
+        <div id="danger-section" style="display:none; margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border-subtle);">
+          <p class="label mb-2" style="color:var(--accent-bright);">Danger Zone</p>
+          <button class="btn btn-ghost" style="font-size:0.78rem;color:var(--accent-bright);border-color:var(--accent-bright);" onclick="showDeleteGroupConfirm()">Delete Group</button>
+          <div id="delete-group-confirm" style="display:none; margin-top:1rem; max-width:480px;">
+            <p class="text-sm" style="color:var(--text-muted); margin-bottom:0.75rem; line-height:1.7;">
+              This will permanently delete this group, all seasons, all episodes, and every album record.
+              <strong>There is no undo.</strong> Type <strong>delete</strong> to confirm.
+            </p>
+            <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+              <input type="text" id="delete-group-input" placeholder="delete" style="width:130px;" oninput="checkDeleteGroupInput()">
+              <button id="delete-group-btn" class="btn" style="font-size:0.78rem;background:var(--accent-bright);color:#fff;border-color:var(--accent-bright);opacity:0.4;cursor:not-allowed;" disabled onclick="executeDeleteGroup()">Delete Forever</button>
+              <button class="btn btn-ghost" style="font-size:0.78rem;" onclick="cancelDeleteGroup()">Cancel</button>
+            </div>
           </div>
         </div>
 

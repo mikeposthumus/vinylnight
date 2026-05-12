@@ -48,7 +48,9 @@ async function route(request, url, env) {
   if (path.match(/^\/api\/users\/[^/]+\/vinyls$/)                 && method === 'GET')  return handleUserVinyls(request, env, path, url);
 
   if (path === '/api/groups'        && method === 'GET')  return handleListGroups(request, env);
-  if (path.match(/^\/api\/groups\/[^/]+$/) && method === 'GET') return handleGetGroup(request, env, path);
+  if (path === '/api/groups'        && method === 'POST') return handleCreateGroup(request, env);
+  if (path.match(/^\/api\/groups\/[^/]+$/) && method === 'GET')    return handleGetGroup(request, env, path);
+  if (path.match(/^\/api\/groups\/[^/]+$/) && method === 'DELETE') return handleDeleteGroup(request, env, path);
   if (path.match(/^\/api\/groups\/[^/]+\/current-episode$/) && method === 'GET') return handleCurrentEpisode(request, env, path);
   if (path.match(/^\/api\/groups\/[^/]+\/invite$/) && method === 'POST') return handleInvite(request, env, path);
 
@@ -60,7 +62,8 @@ async function route(request, url, env) {
   if (path.match(/^\/api\/seasons\/[^/]+\/episodes$/) && method === 'GET')  return handleSeasonEpisodes(request, env, path);
   if (path.match(/^\/api\/seasons\/[^/]+\/episodes$/) && method === 'POST') return handleCreateEpisode(request, env, path);
 
-  if (path.match(/^\/api\/episodes\/[^/]+$/)              && method === 'PUT')  return handleUpdateEpisode(request, env, path);
+  if (path.match(/^\/api\/episodes\/[^/]+$/)              && method === 'PUT')    return handleUpdateEpisode(request, env, path);
+  if (path.match(/^\/api\/episodes\/[^/]+$/)              && method === 'DELETE') return handleDeleteEpisode(request, env, path);
   if (path.match(/^\/api\/episodes\/[^/]+\/vinyls$/)      && method === 'POST') return handleAddVinyl(request, env, path);
   if (path.match(/^\/api\/episodes\/[^/]+\/attendees$/)   && method === 'POST') return handleSetAttendees(request, env, path);
   if (path.match(/^\/api\/episodes\/[^/]+\/guests$/)      && method === 'POST') return handleAddGuest(request, env, path);
@@ -297,6 +300,79 @@ async function handleUserVinyls(request, env, path, url) {
 
 // ── Groups ────────────────────────────────────────────────────────────
 
+async function handleCreateGroup(request, env) {
+  const user = await requireAuth(request, env);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  const body = await parseBody(request);
+  const { name, location, description } = body ?? {};
+  if (!name || !name.trim()) return json({ error: 'name is required' }, 400);
+
+  let base = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50) || 'group';
+  let slug = base;
+  const clash = await env.DB.prepare('SELECT id FROM groups WHERE slug = ?').bind(slug).first();
+  if (clash) {
+    const suffix = Array.from(crypto.getRandomValues(new Uint8Array(2)))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
+    slug = base + '-' + suffix;
+  }
+
+  const groupId   = crypto.randomUUID();
+  const seasonId  = crypto.randomUUID();
+  const foundYear = new Date().getFullYear();
+
+  await env.DB.prepare(
+    'INSERT INTO groups (id, name, slug, location, description, founded_year) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(groupId, name.trim(), slug, location?.trim() || null, description?.trim() || null, foundYear).run();
+
+  await env.DB.prepare(
+    "INSERT INTO group_members (id, group_id, user_id, role, status) VALUES (?, ?, ?, 'founder', 'active')"
+  ).bind(crypto.randomUUID(), groupId, user.id).run();
+
+  await env.DB.prepare(
+    "INSERT INTO seasons (id, group_id, number, year, status) VALUES (?, ?, 1, ?, 'active')"
+  ).bind(seasonId, groupId, foundYear).run();
+
+  return json({ slug }, 201);
+}
+
+async function handleDeleteGroup(request, env, path) {
+  const user = await requireAuth(request, env);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  const slug  = path.split('/').pop();
+  const group = await env.DB.prepare('SELECT id, name FROM groups WHERE slug = ?').bind(slug).first();
+  if (!group) return json({ error: 'Group not found' }, 404);
+
+  const membership = await env.DB.prepare(
+    "SELECT role FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"
+  ).bind(group.id, user.id).first();
+  if (!membership || membership.role !== 'founder') {
+    return json({ error: 'Only founders can delete a group' }, 403);
+  }
+
+  // Manual cascade — FK enforcement not guaranteed in D1
+  const episodes = await env.DB.prepare(
+    'SELECT e.id FROM episodes e JOIN seasons s ON s.id = e.season_id WHERE s.group_id = ?'
+  ).bind(group.id).all();
+
+  for (const ep of episodes.results) {
+    await env.DB.prepare('DELETE FROM episode_vinyls    WHERE episode_id = ?').bind(ep.id).run();
+    await env.DB.prepare('DELETE FROM episode_attendees WHERE episode_id = ?').bind(ep.id).run();
+  }
+
+  await env.DB.prepare(
+    'DELETE FROM episodes WHERE season_id IN (SELECT id FROM seasons WHERE group_id = ?)'
+  ).bind(group.id).run();
+  await env.DB.prepare('DELETE FROM seasons           WHERE group_id = ?').bind(group.id).run();
+  await env.DB.prepare('DELETE FROM group_invitations WHERE group_id = ?').bind(group.id).run();
+  await env.DB.prepare('DELETE FROM group_members     WHERE group_id = ?').bind(group.id).run();
+  await env.DB.prepare('DELETE FROM group_genres      WHERE group_id = ?').bind(group.id).run();
+  await env.DB.prepare('DELETE FROM groups            WHERE id = ?').bind(group.id).run();
+
+  return json({ ok: true });
+}
+
 async function handleListGroups(request, env) {
   const groups = await env.DB.prepare(`
     SELECT g.*,
@@ -473,6 +549,29 @@ async function handleCreateEpisode(request, env, path) {
   ).bind(id, seasonId, nextNumber).run();
 
   return json({ id, number: nextNumber }, 201);
+}
+
+async function handleDeleteEpisode(request, env, path) {
+  const user = await requireAuth(request, env);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  const episodeId = path.split('/')[3];
+  const episode   = await env.DB.prepare(`
+    SELECT e.id, s.group_id FROM episodes e
+    JOIN seasons s ON s.id = e.season_id WHERE e.id = ?
+  `).bind(episodeId).first();
+  if (!episode) return json({ error: 'Episode not found' }, 404);
+
+  const membership = await env.DB.prepare(
+    "SELECT id FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"
+  ).bind(episode.group_id, user.id).first();
+  if (!membership) return json({ error: 'Not a member' }, 403);
+
+  await env.DB.prepare('DELETE FROM episode_vinyls    WHERE episode_id = ?').bind(episodeId).run();
+  await env.DB.prepare('DELETE FROM episode_attendees WHERE episode_id = ?').bind(episodeId).run();
+  await env.DB.prepare('DELETE FROM episodes          WHERE id = ?').bind(episodeId).run();
+
+  return json({ ok: true });
 }
 
 async function handleUpdateEpisode(request, env, path) {
@@ -686,8 +785,9 @@ async function handleInvite(request, env, path) {
   }
 
   const body = await parseBody(request);
-  const { username } = body ?? {};
+  const { username, role } = body ?? {};
   if (!username) return json({ error: 'username is required' }, 400);
+  const inviteRole = role === 'founder' ? 'founder' : 'member';
 
   const invitee = await env.DB.prepare(
     'SELECT id, username FROM users WHERE username = ?'
@@ -706,10 +806,10 @@ async function handleInvite(request, env, path) {
   if (alreadyInvited) return json({ error: 'Invitation already pending for this user' }, 409);
 
   await env.DB.prepare(
-    'INSERT INTO group_invitations (id, group_id, invited_user_id, invited_by, status) VALUES (?, ?, ?, ?, ?)'
-  ).bind(crypto.randomUUID(), group.id, invitee.id, user.id, 'pending').run();
+    'INSERT INTO group_invitations (id, group_id, invited_user_id, invited_by, role, status) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(crypto.randomUUID(), group.id, invitee.id, user.id, inviteRole, 'pending').run();
 
-  return json({ ok: true, invited: invitee.username }, 201);
+  return json({ ok: true, invited: invitee.username, role: inviteRole }, 201);
 }
 
 async function handleMyVinyls(request, env, url) {
@@ -764,8 +864,8 @@ async function handleAcceptInvitation(request, env, path) {
   if (!invitation) return json({ error: 'Invitation not found' }, 404);
 
   await env.DB.prepare(
-    "INSERT INTO group_members (id, group_id, user_id, role, status) VALUES (?, ?, ?, 'member', 'active')"
-  ).bind(crypto.randomUUID(), invitation.group_id, user.id).run();
+    "INSERT INTO group_members (id, group_id, user_id, role, status) VALUES (?, ?, ?, ?, 'active')"
+  ).bind(crypto.randomUUID(), invitation.group_id, user.id, invitation.role || 'member').run();
 
   await env.DB.prepare(
     "UPDATE group_invitations SET status = 'accepted' WHERE id = ?"

@@ -188,9 +188,18 @@ function renderNowPlaying(season, episodes, vinyls) {
           '<p class="label" style="margin-bottom:0.4rem;">Season ' + season.number + ' &middot; Episode ' + currentEp.number + '</p>' +
           (metaParts.length ? '<p class="text-sm text-muted">' + metaParts.join(' &middot; ') + '</p>' : '') +
         '</div>' +
-        '<div id="episode-actions" style="display:none;gap:0.5rem;flex-wrap:wrap;">' +
+        '<div id="episode-actions" style="display:none;gap:0.5rem;flex-wrap:wrap;align-items:center;">' +
           '<button class="btn btn-outline" style="font-size:0.78rem;" onclick="toggleEpisodeEditor()">Edit Episode</button>' +
           '<button class="btn btn-ghost" style="font-size:0.78rem;" onclick="confirmNewEpisode()">New Episode &rarr;</button>' +
+          '<button class="btn btn-ghost" style="font-size:0.78rem;color:var(--accent-bright);" onclick="showCurrentEpDelete()">Delete</button>' +
+        '</div>' +
+        '<div id="del-confirm-current" style="display:none;padding:1rem;background:var(--surface-raised);border:1px solid var(--border-subtle);margin-bottom:1rem;">' +
+          '<p class="text-sm" style="color:var(--text-muted);margin-bottom:0.6rem;">Permanently delete Episode ' + currentEp.number + ' and all its albums. Type <strong>delete</strong> to confirm.</p>' +
+          '<div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">' +
+            '<input type="text" id="del-input-current" placeholder="delete" style="width:130px;margin:0;" oninput="checkDeleteCurrentInput()">' +
+            '<button id="del-btn-current" class="btn" style="font-size:0.78rem;background:var(--accent-bright);color:#fff;border-color:var(--accent-bright);opacity:0.4;cursor:not-allowed;" disabled onclick="executeDeleteCurrentEpisode()">Delete Forever</button>' +
+            '<button class="btn btn-ghost" style="font-size:0.78rem;" onclick="hideCurrentEpDelete()">Cancel</button>' +
+          '</div>' +
         '</div>' +
       '</div>' +
 
@@ -303,6 +312,17 @@ function renderThisSeason(season, episodes, vinylsByEp) {
         '<div style="display:flex;gap:0.75rem;">' +
           '<button class="btn btn-primary" style="font-size:0.78rem;" onclick="saveEpInline(\'' + ep.id + '\')">Save</button>' +
           '<button class="btn btn-ghost" style="font-size:0.78rem;" onclick="toggleEpInlineEditor(\'' + ep.id + '\')">Cancel</button>' +
+        '</div>' +
+        '<div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-subtle);">' +
+          '<div id="del-confirm-' + ep.id + '" style="display:none;margin-bottom:0.5rem;">' +
+            '<p class="text-xs text-muted" style="margin-bottom:0.5rem;">Type <strong>delete</strong> to permanently remove this episode and all its albums.</p>' +
+            '<div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">' +
+              '<input type="text" id="del-input-' + ep.id + '" placeholder="delete" style="width:130px;margin:0;" oninput="checkDeleteInput(\'' + ep.id + '\')">' +
+              '<button id="del-btn-' + ep.id + '" class="btn" style="font-size:0.78rem;background:var(--accent-bright);color:#fff;border-color:var(--accent-bright);opacity:0.4;cursor:not-allowed;" disabled onclick="executeDeleteEpisode(\'' + ep.id + '\')">Delete Forever</button>' +
+              '<button class="btn btn-ghost" style="font-size:0.78rem;" onclick="document.getElementById(\'del-confirm-' + ep.id + '\').style.display=\'none\'">Cancel</button>' +
+            '</div>' +
+          '</div>' +
+          '<button class="ep-edit-btn" style="font-size:0.78rem;background:none;border:none;cursor:pointer;color:var(--accent-bright);padding:0;" onclick="document.getElementById(\'del-confirm-' + ep.id + '\').style.display=\'\'">Delete Episode</button>' +
         '</div>' +
       '</div>';
 
@@ -449,6 +469,17 @@ async function loadSeasonEpisodes(seasonId) {
           '<button class="btn btn-primary" style="font-size:0.78rem;" onclick="saveEpInline(\'' + ep.id + '\')">Save</button>' +
           '<button class="btn btn-ghost" style="font-size:0.78rem;" onclick="toggleEpInlineEditor(\'' + ep.id + '\')">Cancel</button>' +
         '</div>' +
+        '<div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-subtle);">' +
+          '<div id="del-confirm-' + ep.id + '" style="display:none;margin-bottom:0.5rem;">' +
+            '<p class="text-xs text-muted" style="margin-bottom:0.5rem;">Type <strong>delete</strong> to permanently remove this episode and all its albums.</p>' +
+            '<div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">' +
+              '<input type="text" id="del-input-' + ep.id + '" placeholder="delete" style="width:130px;margin:0;" oninput="checkDeleteInput(\'' + ep.id + '\')">' +
+              '<button id="del-btn-' + ep.id + '" class="btn" style="font-size:0.78rem;background:var(--accent-bright);color:#fff;border-color:var(--accent-bright);opacity:0.4;cursor:not-allowed;" disabled onclick="executeDeleteEpisode(\'' + ep.id + '\')">Delete Forever</button>' +
+              '<button class="btn btn-ghost" style="font-size:0.78rem;" onclick="document.getElementById(\'del-confirm-' + ep.id + '\').style.display=\'none\'">Cancel</button>' +
+            '</div>' +
+          '</div>' +
+          '<button class="ep-edit-btn" style="font-size:0.78rem;background:none;border:none;cursor:pointer;color:var(--accent-bright);padding:0;" onclick="document.getElementById(\'del-confirm-' + ep.id + '\').style.display=\'\'">Delete Episode</button>' +
+        '</div>' +
       '</div>';
 
     return '<details class="season">' +
@@ -504,6 +535,7 @@ function checkMembership() {
 
   if (isFounder) {
     document.getElementById('invite-section').style.display = '';
+    document.getElementById('danger-section').style.display = '';
   }
 
   document.getElementById('nav-auth-link').textContent = currentUser.username;
@@ -651,6 +683,85 @@ async function confirmNewEpisode() {
   }
 }
 
+/* ── Delete episode ─────────────────────────────────────────── */
+function showCurrentEpDelete() {
+  document.getElementById('del-confirm-current').style.display = '';
+}
+function hideCurrentEpDelete() {
+  var el = document.getElementById('del-confirm-current');
+  if (el) el.style.display = 'none';
+  var inp = document.getElementById('del-input-current');
+  if (inp) inp.value = '';
+  var btn = document.getElementById('del-btn-current');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed'; }
+}
+function checkDeleteCurrentInput() {
+  var inp = document.getElementById('del-input-current');
+  var btn = document.getElementById('del-btn-current');
+  if (!inp || !btn) return;
+  var ok = inp.value.toLowerCase() === 'delete';
+  btn.disabled = !ok;
+  btn.style.opacity = ok ? '1' : '0.4';
+  btn.style.cursor  = ok ? 'pointer' : 'not-allowed';
+}
+async function executeDeleteCurrentEpisode() {
+  if (!currentEpisodeId) return;
+  try {
+    var res = await fetch('/api/episodes/' + currentEpisodeId, { method: 'DELETE' });
+    if (!res.ok) { var e = await res.json(); alert(e.error || 'Could not delete episode.'); return; }
+    await loadCurrentSeason();
+  } catch(e) { alert('Could not delete episode.'); }
+}
+
+function checkDeleteInput(epId) {
+  var inp = document.getElementById('del-input-' + epId);
+  var btn = document.getElementById('del-btn-' + epId);
+  if (!inp || !btn) return;
+  var ok = inp.value.toLowerCase() === 'delete';
+  btn.disabled = !ok;
+  btn.style.opacity = ok ? '1' : '0.4';
+  btn.style.cursor  = ok ? 'pointer' : 'not-allowed';
+}
+async function executeDeleteEpisode(epId) {
+  try {
+    var res = await fetch('/api/episodes/' + epId, { method: 'DELETE' });
+    if (!res.ok) { var e = await res.json(); alert(e.error || 'Could not delete episode.'); return; }
+    var info = episodeSeasonMap[epId];
+    if (info && info.isArchive) {
+      loadedSeasons[info.seasonId] = false;
+      loadSeasonEpisodes(info.seasonId);
+    } else {
+      loadCurrentSeason();
+    }
+  } catch(e) { alert('Could not delete episode.'); }
+}
+
+/* ── Delete group ───────────────────────────────────────────── */
+function showDeleteGroupConfirm() {
+  document.getElementById('delete-group-confirm').style.display = '';
+}
+function cancelDeleteGroup() {
+  document.getElementById('delete-group-confirm').style.display = 'none';
+  document.getElementById('delete-group-input').value = '';
+  var btn = document.getElementById('delete-group-btn');
+  btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed';
+}
+function checkDeleteGroupInput() {
+  var inp = document.getElementById('delete-group-input');
+  var btn = document.getElementById('delete-group-btn');
+  var ok  = inp.value.toLowerCase() === 'delete';
+  btn.disabled = !ok;
+  btn.style.opacity = ok ? '1' : '0.4';
+  btn.style.cursor  = ok ? 'pointer' : 'not-allowed';
+}
+async function executeDeleteGroup() {
+  try {
+    var res = await fetch('/api/groups/' + GROUP_SLUG, { method: 'DELETE' });
+    if (!res.ok) { var e = await res.json(); alert(e.error || 'Could not delete group.'); return; }
+    window.location.href = '/groups.html';
+  } catch(e) { alert('Could not delete group.'); }
+}
+
 /* ── Album art (iTunes) ─────────────────────────────────────── */
 var artTimer = null;
 function fetchAlbumArt() {
@@ -737,6 +848,7 @@ function toggleInviteForm() {
 
 async function sendInvite() {
   var username = (document.getElementById('invite-username').value || '').trim();
+  var role     = (document.getElementById('invite-role') || {}).value || 'member';
   var errEl    = document.getElementById('invite-error');
   var success  = document.getElementById('invite-success');
   errEl.style.display   = 'none';
@@ -746,12 +858,12 @@ async function sendInvite() {
   var res  = await fetch('/api/groups/' + GROUP_SLUG + '/invite', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: username }),
+    body: JSON.stringify({ username: username, role: role }),
   });
   var data = await res.json();
   if (res.ok) {
     document.getElementById('invite-username').value = '';
-    success.textContent   = 'Invitation sent to ' + data.invited + '.';
+    success.textContent   = 'Invitation sent to ' + data.invited + ' as ' + (data.role || 'member') + '.';
     success.style.display = '';
   } else {
     errEl.textContent   = data.error || 'Could not send invitation.';

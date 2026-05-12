@@ -33,7 +33,7 @@
         <li><a href="groups.html">Groups</a></li>
         <li><a href="how-to-start.html" class="active">How to Start</a></li>
         <li><a href="bylaws.html">Bylaws</a></li>
-        <li><a href="profile.html" class="nav-cta">Sign In</a></li>
+        <li><a href="profile.html" class="nav-cta" id="nav-auth-link">Sign In</a></li>
       </ul>
       <button class="nav-hamburger" id="nav-toggle" aria-label="Open navigation menu" aria-expanded="false">
         <span></span><span></span><span></span>
@@ -182,9 +182,38 @@
           <p class="text-muted mb-4" style="font-size: 0.95rem;">
             Create your group on VinylNight.net, track your archive, and connect with other groups. The record of what you've listened to together is worth keeping.
           </p>
-          <div class="flex gap-2" style="flex-wrap: wrap;">
-            <a href="profile.html" class="btn btn-primary">Create an Account</a>
+
+          <!-- Shown when not signed in -->
+          <div id="cta-unauthed" class="flex gap-2" style="flex-wrap: wrap;">
+            <a href="profile.html" class="btn btn-primary">Create an Account &rarr;</a>
             <a href="groups.html" class="btn btn-outline">Browse Existing Groups</a>
+          </div>
+
+          <!-- Shown when signed in -->
+          <div id="cta-authed" style="display:none;">
+            <div class="flex gap-2" style="flex-wrap: wrap; margin-bottom: 1.5rem;">
+              <button id="new-group-toggle" class="btn btn-primary" onclick="toggleNewGroupForm()">Start Your Group &rarr;</button>
+              <a href="groups.html" class="btn btn-outline">Browse Existing Groups</a>
+            </div>
+            <div id="new-group-form" style="display:none; max-width: 480px;">
+              <div id="new-group-error" style="display:none; color:var(--accent-bright); font-size:0.88rem; margin-bottom:0.75rem;"></div>
+              <div class="form-group">
+                <label for="ng-name">Group Name</label>
+                <input type="text" id="ng-name" placeholder="The Original" autocomplete="off">
+              </div>
+              <div class="form-group">
+                <label for="ng-location">Location <span class="text-xs text-muted">(optional)</span></label>
+                <input type="text" id="ng-location" placeholder="Grand Rapids, MI" autocomplete="off">
+              </div>
+              <div class="form-group">
+                <label for="ng-description">Description <span class="text-xs text-muted">(optional)</span></label>
+                <input type="text" id="ng-description" placeholder="Monthly vinyl night in the living room" autocomplete="off">
+              </div>
+              <div style="display:flex; gap:0.75rem; margin-top:0.25rem;">
+                <button class="btn btn-primary" onclick="createGroup()">Create Group</button>
+                <button class="btn btn-ghost" onclick="toggleNewGroupForm()">Cancel</button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -205,5 +234,49 @@
   </footer>
 
   <script src="js/main.js"></script>
+  <script>
+    (async function () {
+      try {
+        var res = await fetch('/api/auth/me');
+        if (!res.ok) return;
+        var data = await res.json();
+        var navLink = document.getElementById('nav-auth-link');
+        if (navLink) { navLink.textContent = data.user.username; navLink.href = 'profile.html'; }
+        document.getElementById('cta-unauthed').style.display = 'none';
+        document.getElementById('cta-authed').style.display = '';
+      } catch (e) { /* guest — defaults stay */ }
+    })();
+
+    function toggleNewGroupForm() {
+      var form = document.getElementById('new-group-form');
+      var btn  = document.getElementById('new-group-toggle');
+      var open = form.style.display !== 'none';
+      form.style.display = open ? 'none' : '';
+      btn.style.display  = open ? '' : 'none';
+      if (!open) document.getElementById('ng-name').focus();
+    }
+
+    async function createGroup() {
+      var name        = (document.getElementById('ng-name').value || '').trim();
+      var location    = (document.getElementById('ng-location').value || '').trim();
+      var description = (document.getElementById('ng-description').value || '').trim();
+      var errEl       = document.getElementById('new-group-error');
+      errEl.style.display = 'none';
+      if (!name) { errEl.textContent = 'Group name is required.'; errEl.style.display = ''; return; }
+
+      try {
+        var res  = await fetch('/api/groups', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name, location: location || null, description: description || null }),
+        });
+        var data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Could not create group.'; errEl.style.display = ''; return; }
+        window.location.href = '/group/' + data.slug;
+      } catch (e) {
+        errEl.textContent = 'Could not create group.'; errEl.style.display = '';
+      }
+    }
+  </script>
 </body>
 </html>
