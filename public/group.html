@@ -47,6 +47,36 @@
             <p class="group-location" id="group-location"></p>
             <p class="text-muted text-sm" id="group-description" style="max-width: 520px; line-height: 1.8;"></p>
           <div class="hero-members" id="hero-members"></div>
+          <div class="access-notice" id="state-guest">
+          <p><strong>Listening in.</strong> <a href="profile.html">Sign in</a> to view membership details.</p>
+        </div>
+        <div class="access-notice" style="display: none;" id="state-nonmember">
+          <p><strong>This group is by invitation only.</strong> A founder must invite you to join.</p>
+        </div>
+
+        <!-- Invite section — founders only, rendered by JS -->
+        <div id="invite-section" style="display: none; margin-bottom: 1.5rem;">
+          <button class="btn btn-outline" style="font-size:0.78rem;" onclick="toggleInviteForm()">Invite Member</button>
+          <div id="invite-form" style="display: none; margin-top: 1rem; max-width: 480px;">
+            <div id="invite-error" class="form-hint" style="color: var(--accent-bright); display: none; margin-bottom: 0.75rem;"></div>
+            <div style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 160px;">
+                <label for="invite-username" style="margin-bottom: 0.4rem; display: block;">Username</label>
+                <input type="text" id="invite-username" placeholder="their-username" autocomplete="off">
+              </div>
+              <div>
+                <label for="invite-role" style="margin-bottom: 0.4rem; display: block;">Role</label>
+                <select id="invite-role">
+                  <option value="member">Member</option>
+                  <option value="founder">Founder</option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-primary" onclick="sendInvite()">Send Invite</button>
+              <button type="button" class="btn btn-ghost" onclick="toggleInviteForm()">Cancel</button>
+            </div>
+            <div id="invite-success" style="display: none; margin-top: 0.75rem;" class="form-hint"></div>
+          </div>
+        </div>
           </div>
           <div class="group-stats" aria-label="Group statistics">
             <div class="stat-block">
@@ -92,37 +122,6 @@
 
       <!-- ── NOW PLAYING ────────────────────────────────────────── -->
       <div class="tab-panel active" id="tab-now">
-
-        <div class="access-notice" id="state-guest">
-          <p><strong>Listening in.</strong> <a href="profile.html">Sign in</a> to view membership details.</p>
-        </div>
-        <div class="access-notice" style="display: none;" id="state-nonmember">
-          <p><strong>This group is by invitation only.</strong> A founder must invite you to join.</p>
-        </div>
-
-        <!-- Invite section — founders only, rendered by JS -->
-        <div id="invite-section" style="display: none; margin-bottom: 1.5rem;">
-          <button class="btn btn-outline" style="font-size:0.78rem;" onclick="toggleInviteForm()">Invite Member</button>
-          <div id="invite-form" style="display: none; margin-top: 1rem; max-width: 480px;">
-            <div id="invite-error" class="form-hint" style="color: var(--accent-bright); display: none; margin-bottom: 0.75rem;"></div>
-            <div style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;">
-              <div style="flex: 1; min-width: 160px;">
-                <label for="invite-username" style="margin-bottom: 0.4rem; display: block;">Username</label>
-                <input type="text" id="invite-username" placeholder="their-username" autocomplete="off">
-              </div>
-              <div>
-                <label for="invite-role" style="margin-bottom: 0.4rem; display: block;">Role</label>
-                <select id="invite-role">
-                  <option value="member">Member</option>
-                  <option value="founder">Founder</option>
-                </select>
-              </div>
-              <button type="button" class="btn btn-primary" onclick="sendInvite()">Send Invite</button>
-              <button type="button" class="btn btn-ghost" onclick="toggleInviteForm()">Cancel</button>
-            </div>
-            <div id="invite-success" style="display: none; margin-top: 0.75rem;" class="form-hint"></div>
-          </div>
-        </div>
 
         <div id="now-playing-content">
           <p class="text-muted text-sm">Loading&hellip;</p>
