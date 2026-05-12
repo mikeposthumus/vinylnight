@@ -64,7 +64,7 @@ function renderGroups(groups) {
     var gatherings = g.episode_count || 0;
     var estLabel   = g.founded_year ? 'Est. ' + g.founded_year : '';
 
-    return '<a href="/group/' + esc(g.slug) + '" class="card group-card" style="text-decoration:none;">' +
+    return '<a href="/group.html?g=' + esc(g.slug) + '" class="card group-card" style="text-decoration:none;">' +
       '<div class="group-detail-header">' +
         '<div class="group-detail-record" aria-hidden="true"></div>' +
         '<div>' +

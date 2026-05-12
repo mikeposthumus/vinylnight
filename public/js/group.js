@@ -15,7 +15,7 @@ var episodeSeasonMap = {};
 
 async function loadGroup() {
   if (!GROUP_SLUG) {
-    window.location.replace('/groups.html');
+    document.getElementById('group-name').textContent = 'Group not found';
     return;
   }
   try {
@@ -1104,7 +1104,7 @@ function esc(str) {
 }
 
 function groupSlugFromURL() {
-  var match = window.location.pathname.match(/^\/group\/([^/.]+)\/?$/);
+  var match = window.location.pathname.match(/^\/group\/([^/]+)\/?$/);
   if (match) return decodeURIComponent(match[1]);
-  return new URLSearchParams(window.location.search).get('group') || null;
+  return new URLSearchParams(window.location.search).get('g') || null;
 }
