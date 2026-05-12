@@ -744,8 +744,9 @@ async function handleAddVinyl(request, env, path) {
   if (!membership) return json({ error: 'Not a member of this group' }, 403);
 
   const body = await parseBody(request);
-  const { artist, album_title, art_url, contributor_username } = body ?? {};
+  const { artist, album_title, art_url, contributor_username, play_order } = body ?? {};
   if (!artist || !album_title) return json({ error: 'artist and album_title are required' }, 400);
+  const playOrder = Number.isInteger(play_order) && play_order > 0 ? play_order : null;
 
   let contributedBy   = user.id;
   let contributorName = user.username;
@@ -774,10 +775,10 @@ async function handleAddVinyl(request, env, path) {
 
   const id = crypto.randomUUID();
   await env.DB.prepare(
-    'INSERT INTO episode_vinyls (id, episode_id, contributed_by, artist, album_title, art_url) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(id, episodeId, contributedBy, artist, album_title, art_url ?? null).run();
+    'INSERT INTO episode_vinyls (id, episode_id, contributed_by, artist, album_title, art_url, play_order) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).bind(id, episodeId, contributedBy, artist, album_title, art_url ?? null, playOrder).run();
 
-  return json({ id, artist, album_title, contributor_username: contributorName }, 201);
+  return json({ id, artist, album_title, contributor_username: contributorName, play_order: playOrder }, 201);
 }
 
 async function handleFetchVinylArt(request, env, path) {

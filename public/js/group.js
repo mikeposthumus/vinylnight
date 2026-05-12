@@ -243,6 +243,7 @@ function renderNowPlaying(season, episodes, vinyls) {
           '</div>' +
           '<div><label for="add-artist">Artist</label><input type="text" id="add-artist" placeholder="Artist name" oninput="fetchAlbumArt()"></div>' +
           '<div><label for="add-album-title">Album</label><input type="text" id="add-album-title" placeholder="Album title" oninput="fetchAlbumArt()"></div>' +
+          '<div><label for="add-play-order">Order</label><input type="number" id="add-play-order" placeholder="#" min="1" max="99" style="width:5rem;"></div>' +
           '<div style="display:flex;align-items:flex-end;gap:0.75rem;">' +
             '<div class="art-preview" id="art-preview" title="Album art preview"><div class="art-preview-icon"></div></div>' +
             '<button type="button" class="btn btn-primary" onclick="addAlbum()">Add</button>' +
@@ -811,6 +812,8 @@ async function addAlbum() {
   var artUrl      = document.getElementById('art-preview').dataset.artUrl || null;
   var contribSel  = document.getElementById('add-contributor');
   var contributor = contribSel ? contribSel.value : '';
+  var orderVal    = parseInt(document.getElementById('add-play-order').value, 10);
+  var playOrder   = Number.isFinite(orderVal) && orderVal > 0 ? orderVal : null;
   if (!artist || !album) return;
 
   var res = await fetch('/api/episodes/' + currentEpisodeId + '/vinyls', {
@@ -821,12 +824,14 @@ async function addAlbum() {
       album_title:          album,
       art_url:              artUrl,
       contributor_username: contributor || null,
+      play_order:           playOrder,
     }),
   });
 
   if (res.ok) {
     document.getElementById('add-artist').value      = '';
     document.getElementById('add-album-title').value = '';
+    document.getElementById('add-play-order').value  = '';
     document.getElementById('art-preview').innerHTML = '<div class="art-preview-icon"></div>';
     delete document.getElementById('art-preview').dataset.artUrl;
     await loadCurrentSeason();
