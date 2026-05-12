@@ -65,6 +65,8 @@ async function route(request, url, env) {
   if (path.match(/^\/api\/episodes\/[^/]+\/attendees$/)   && method === 'POST') return handleSetAttendees(request, env, path);
   if (path.match(/^\/api\/episodes\/[^/]+\/guests$/)      && method === 'POST') return handleAddGuest(request, env, path);
 
+  if (path.match(/^\/api\/vinyls\/[^/]+\/art$/)           && method === 'POST') return handleFetchVinylArt(request, env, path);
+
   return json({ error: 'Not found' }, 404);
 }
 
@@ -638,6 +640,34 @@ async function handleAddVinyl(request, env, path) {
   ).bind(id, episodeId, contributedBy, artist, album_title, art_url ?? null).run();
 
   return json({ id, artist, album_title, contributor_username: contributorName }, 201);
+}
+
+async function handleFetchVinylArt(request, env, path) {
+  const vinylId = path.split('/')[3];
+  const vinyl = await env.DB.prepare(
+    'SELECT id, artist, album_title, art_url FROM episode_vinyls WHERE id = ?'
+  ).bind(vinylId).first();
+  if (!vinyl) return json({ error: 'Not found' }, 404);
+  if (vinyl.art_url) return json({ art_url: vinyl.art_url });
+
+  const term = encodeURIComponent(vinyl.artist + ' ' + vinyl.album_title);
+  let artUrl = null;
+  try {
+    const res  = await fetch(`https://itunes.apple.com/search?term=${term}&media=music&entity=album&limit=5`);
+    const data = await res.json();
+    if (data.results && data.results.length) {
+      const target = vinyl.album_title.toLowerCase();
+      const best = data.results.find(r => (r.collectionName || '').toLowerCase() === target)
+        || data.results.find(r => (r.collectionName || '').toLowerCase().includes(target))
+        || data.results[0];
+      artUrl = best.artworkUrl100.replace('100x100bb', '600x600bb');
+    }
+  } catch {}
+
+  if (artUrl) {
+    await env.DB.prepare('UPDATE episode_vinyls SET art_url = ? WHERE id = ?').bind(artUrl, vinylId).run();
+  }
+  return json({ art_url: artUrl });
 }
 
 async function handleInvite(request, env, path) {

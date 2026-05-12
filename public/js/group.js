@@ -119,7 +119,7 @@ function renderNowPlaying(season, episodes, vinyls) {
 
   /* Only add empty sleeve if it stays on the current row */
   var albumsHtml = epVinyls.map(function(v) {
-    return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url);
+    return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url, v.id);
   }).join('');
   if (epVinyls.length % 3 !== 0) albumsHtml += emptySleeveHtml();
 
@@ -240,7 +240,6 @@ function renderNowPlaying(season, episodes, vinyls) {
     '</div>';
 
   checkMembership();
-  loadAlbumArtForContainer(el);
   renderThisSeason(season, otherEps, vinylsByEp);
 }
 
@@ -260,12 +259,13 @@ function renderThisSeason(season, episodes, vinylsByEp) {
     episodeSeasonMap[ep.id] = { seasonId: season.id, isArchive: false };
 
     var albumsHtml = epVinyls.map(function(v) {
-      return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url);
+      return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url, v.id);
     }).join('');
 
-    var albumsText = epVinyls.map(function(v) {
-      return esc(v.artist) + ' &mdash; <em>' + esc(v.album_title) + '</em>';
-    }).join(' &middot; ');
+    var albumTags = epVinyls.map(function(v) {
+      return '<span class="tag" style="font-size:0.72rem;font-weight:normal;">' +
+        esc(v.artist) + ' &mdash; <em>' + esc(v.album_title) + '</em></span>';
+    }).join('');
 
     var hostLine = ep.host_username
       ? '<p class="text-xs text-muted" style="margin-top:0.2rem;">Hosted by ' + esc(ep.host_username) +
@@ -314,7 +314,7 @@ function renderThisSeason(season, episodes, vinylsByEp) {
               (dateLabel ? ' &mdash; ' + dateLabel : '') + '</span>' +
           '</div>' +
           hostLine +
-          (albumsText ? '<p class="text-xs" style="margin-top:0.3rem;color:var(--text-muted);">' + albumsText + '</p>' : '') +
+          (albumTags ? '<div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-top:0.4rem;">' + albumTags + '</div>' : '') +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">' +
           '<button class="ep-edit-btn" title="Edit episode" style="' + (isMember ? '' : 'display:none;') + 'background:none;border:none;cursor:pointer;padding:0.25rem 0.5rem;font-size:1rem;color:var(--text-muted);" onclick="event.stopPropagation();toggleEpInlineEditor(\'' + ep.id + '\')">&#9998;</button>' +
@@ -333,9 +333,7 @@ function renderThisSeason(season, episodes, vinylsByEp) {
   wrap.innerHTML =
     '<hr class="groove" style="margin:2rem 0;">' +
     '<p class="label mb-4">Season ' + season.number + ' &mdash; ' + season.year + '</p>' +
-    html;
-
-  loadAlbumArtForContainer(wrap);
+    '<div style="padding-left:1.5rem;">' + html + '</div>';
 }
 
 /* ── Archive ───────────────────────────────────────────────── */
@@ -363,7 +361,7 @@ function renderArchive() {
           '<span class="season-chevron">&#9656;</span>' +
         '</div>' +
       '</summary>' +
-      '<div class="episodes-list" id="eps-' + s.id + '">' +
+      '<div class="episodes-list" id="eps-' + s.id + '" style="padding-left:1.5rem;">' +
         '<p class="text-muted text-sm" style="padding:1rem 0;">Loading&hellip;</p>' +
       '</div>' +
     '</details>';
@@ -406,12 +404,13 @@ async function loadSeasonEpisodes(seasonId) {
     episodeSeasonMap[ep.id] = { seasonId: seasonId, isArchive: true };
 
     var albumsHtml = epVinyls.map(function(v) {
-      return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url);
+      return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url, v.id);
     }).join('');
 
-    var albumsText = epVinyls.map(function(v) {
-      return esc(v.artist) + ' &mdash; <em>' + esc(v.album_title) + '</em>';
-    }).join(' &middot; ');
+    var albumTags = epVinyls.map(function(v) {
+      return '<span class="tag" style="font-size:0.72rem;font-weight:normal;">' +
+        esc(v.artist) + ' &mdash; <em>' + esc(v.album_title) + '</em></span>';
+    }).join('');
 
     var hostLine = ep.host_username
       ? '<p class="text-xs text-muted" style="margin-top:0.2rem;">Hosted by ' + esc(ep.host_username) +
@@ -458,7 +457,7 @@ async function loadSeasonEpisodes(seasonId) {
           '<span class="season-title">Episode ' + ep.number +
             (dateLabel ? ' &mdash; ' + dateLabel : '') + '</span>' +
           hostLine +
-          (albumsText ? '<p class="text-xs" style="margin-top:0.3rem;color:var(--text-muted);">' + albumsText + '</p>' : '') +
+          (albumTags ? '<div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-top:0.4rem;">' + albumTags + '</div>' : '') +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">' +
           '<button class="ep-edit-btn" title="Edit episode" style="' + (isMember ? '' : 'display:none;') + 'background:none;border:none;cursor:pointer;padding:0.25rem 0.5rem;font-size:1rem;color:var(--text-muted);" onclick="event.stopPropagation();toggleEpInlineEditor(\'' + ep.id + '\')">&#9998;</button>' +
@@ -477,7 +476,6 @@ async function loadSeasonEpisodes(seasonId) {
   var container = document.getElementById('eps-' + seasonId);
   container.innerHTML = html ||
     '<p class="text-muted text-sm" style="padding:1rem 0;">No episodes recorded yet.</p>';
-  if (html) loadAlbumArtForContainer(container);
 }
 
 /* ── Auth state / membership ────────────────────────────────── */
@@ -771,42 +769,40 @@ function switchTab(name) {
   });
 }
 
-/* ── Album art for sleeves (iTunes) ─────────────────────────── */
-function loadAlbumArtForContainer(container) {
-  container.querySelectorAll('.album-sleeve[data-artist]').forEach(function(sleeve) {
-    if (sleeve.querySelector('img') || sleeve.dataset.artLoading) return;
-    sleeve.dataset.artLoading = '1';
-    var artist = sleeve.dataset.artist;
-    var album  = sleeve.dataset.album;
-    fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + album) + '&media=music&entity=album&limit=5')
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.results && data.results.length) {
-          var target = album.toLowerCase();
-          var best = data.results.find(function(r) {
-            return (r.collectionName || '').toLowerCase() === target;
-          }) || data.results.find(function(r) {
-            return (r.collectionName || '').toLowerCase().indexOf(target) !== -1;
-          }) || data.results[0];
-          var art = best.artworkUrl100.replace('100x100bb', '600x600bb');
-          var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
-          if (!placeholder) return;
-          var img = document.createElement('img');
-          img.src = art;
-          img.alt = artist + ' — ' + album;
-          img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-          placeholder.replaceWith(img);
-        }
-      }).catch(function() {});
-  });
+/* ── Album art — click-to-load ───────────────────────────────── */
+async function fetchSleeveArt(sleeve) {
+  var vinylId = sleeve.dataset.vinylId;
+  if (!vinylId || sleeve.dataset.artLoading) return;
+  sleeve.dataset.artLoading = '1';
+  sleeve.style.cursor = 'wait';
+  try {
+    var res  = await fetch('/api/vinyls/' + vinylId + '/art', { method: 'POST' });
+    var data = await res.json();
+    if (!data.art_url) { sleeve.style.cursor = 'default'; return; }
+    var placeholder = sleeve.querySelector('.album-sleeve-placeholder');
+    if (!placeholder) return;
+    var img = document.createElement('img');
+    img.src = data.art_url;
+    img.alt = (sleeve.dataset.artist || '') + ' — ' + (sleeve.dataset.album || '');
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+    placeholder.replaceWith(img);
+    sleeve.style.cursor = 'default';
+    sleeve.onclick = null;
+  } catch(e) {
+    sleeve.style.cursor = 'pointer';
+    delete sleeve.dataset.artLoading;
+  }
 }
 
 /* ── Helpers ────────────────────────────────────────────────── */
-function albumSleeveHtml(artist, album, contributor, artUrl) {
+function albumSleeveHtml(artist, album, contributor, artUrl, vinylId) {
   var imgHtml = artUrl
     ? '<img src="' + esc(artUrl) + '" alt="' + esc(artist) + ' — ' + esc(album) + '" style="width:100%;height:100%;object-fit:cover;display:block;">'
     : '<div class="album-sleeve-placeholder" aria-hidden="true"><div class="album-sleeve-placeholder-disc"></div></div>';
-  return '<div class="album-sleeve" data-artist="' + esc(artist) + '" data-album="' + esc(album) + '">' +
+  var clickable = !artUrl && vinylId;
+  var extra = (clickable ? ' onclick="fetchSleeveArt(this)" style="cursor:pointer;" title="Click to load art"' : '') +
+              (vinylId   ? ' data-vinyl-id="' + esc(vinylId) + '"' : '');
+  return '<div class="album-sleeve"' + extra + ' data-artist="' + esc(artist) + '" data-album="' + esc(album) + '">' +
     '<div class="album-sleeve-image">' + imgHtml + '</div>' +
     '<div class="album-sleeve-footer">' +
       '<p class="album-sleeve-label">' + esc(artist) + '</p>' +
