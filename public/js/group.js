@@ -599,5 +599,7 @@ function esc(str) {
 }
 
 function groupSlugFromURL() {
+  var match = window.location.pathname.match(/^\/group\/([^/]+)\/?$/);
+  if (match) return decodeURIComponent(match[1]);
   return new URLSearchParams(window.location.search).get('group') || 'the-original';
 }

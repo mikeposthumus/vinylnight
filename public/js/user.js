@@ -46,7 +46,7 @@ function render(data) {
           '<div class="avatar" style="width:28px;height:28px;font-size:0.7rem;">' +
             esc((g.name || '?')[0].toUpperCase()) +
           '</div>' +
-          '<a href="group.html?group=' + esc(g.slug) + '" style="color:var(--text-muted);font-size:0.88rem;">' +
+          '<a href="/group/' + esc(g.slug) + '" style="color:var(--text-muted);font-size:0.88rem;">' +
             esc(g.name) +
           '</a>' +
         '</div>';
@@ -103,7 +103,7 @@ function appendVinyls(vinyls) {
         '<p class="album-sleeve-label">' + esc(v.artist) + '</p>' +
         '<p class="album-sleeve-title"><em>' + esc(v.album_title) + '</em></p>' +
         '<p class="album-sleeve-contributor">' +
-          '<a href="group.html?group=' + esc(v.group_slug) + '" style="color:var(--text-dim);">' +
+          '<a href="/group/' + esc(v.group_slug) + '" style="color:var(--text-dim);">' +
             esc(v.group_name) + '</a>' +
         '</p>' +
       '</div>' +

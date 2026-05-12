@@ -20,7 +20,7 @@
         <li><a href="groups.html" class="active">Groups</a></li>
         <li><a href="how-to-start.html">How to Start</a></li>
         <li><a href="bylaws.html">Bylaws</a></li>
-        <li><a href="profile.html" class="nav-cta">Sign In</a></li>
+        <li><a href="profile.html" class="nav-cta" id="nav-auth-link">Sign In</a></li>
       </ul>
       <button class="nav-hamburger" id="nav-toggle" aria-label="Open navigation menu" aria-expanded="false">
         <span></span><span></span><span></span>
@@ -48,178 +48,14 @@
 
       <div class="page-content">
 
-        <!-- Search / filter bar -->
         <div class="groups-toolbar">
-          <input type="text" placeholder="Search groups by name or city&hellip;" aria-label="Search groups">
+          <input type="text" id="group-search" placeholder="Search groups by name or city&hellip;" aria-label="Search groups">
           <a href="how-to-start.html" class="btn btn-outline">+ Start a Group</a>
         </div>
 
-        <!-- Group list -->
-        <div class="card-grid" style="margin-bottom: 4rem;">
-
-          <!-- Group Card 1 -->
-          <a href="group.html" class="card group-card" style="text-decoration: none;">
-            <div class="group-detail-header">
-              <div class="group-detail-record" aria-hidden="true"></div>
-              <div>
-                <p class="group-card-name">The Original</p>
-                <p class="group-card-location text-xs mt-1">Grand Rapids, MI</p>
-              </div>
-            </div>
-            <p class="text-muted text-sm mt-2">
-              The founding group. Eight years, never a missed month. Five close friends who started this whole thing.
-            </p>
-            <div class="gathering-albums mt-2">
-              <span class="tag">Rock</span>
-              <span class="tag">Folk</span>
-            </div>
-            <div class="group-card-footer">
-              <div class="meta-row">
-                <span class="meta-item"><strong>5</strong> members</span>
-                <span class="meta-item"><strong>90+</strong> gatherings</span>
-              </div>
-              <span class="text-xs text-muted">Est. 2018</span>
-            </div>
-          </a>
-
-          <!-- Group Card 2 -->
-          <a href="group.html" class="card group-card" style="text-decoration: none;">
-            <div class="group-detail-header">
-              <div class="group-detail-record" aria-hidden="true"></div>
-              <div>
-                <p class="group-card-name">BK Listening Room</p>
-                <p class="group-card-location text-xs mt-1">Brooklyn, NY</p>
-              </div>
-            </div>
-            <p class="text-muted text-sm mt-2">
-              A record shop side room turned monthly ritual. Eclectic taste, strong opinions, excellent beverages.
-            </p>
-            <div class="gathering-albums mt-2">
-              <span class="tag">Jazz</span>
-              <span class="tag">Electronic</span>
-            </div>
-            <div class="group-card-footer">
-              <div class="meta-row">
-                <span class="meta-item"><strong>4</strong> members</span>
-                <span class="meta-item"><strong>22</strong> gatherings</span>
-              </div>
-              <span class="text-xs text-muted">Est. 2024</span>
-            </div>
-          </a>
-
-          <!-- Group Card 3 -->
-          <a href="group.html" class="card group-card" style="text-decoration: none;">
-            <div class="group-detail-header">
-              <div class="group-detail-record" aria-hidden="true"></div>
-              <div>
-                <p class="group-card-name">Saturday Side B</p>
-                <p class="group-card-location text-xs mt-1">Austin, TX</p>
-              </div>
-            </div>
-            <p class="text-muted text-sm mt-2">
-              Three friends, a back porch, and a standing Saturday night commitment. Nine months in and going strong.
-            </p>
-            <div class="gathering-albums mt-2">
-              <span class="tag">Country</span>
-              <span class="tag">Americana</span>
-              <span class="tag">Rock</span>
-            </div>
-            <div class="group-card-footer">
-              <div class="meta-row">
-                <span class="meta-item"><strong>3</strong> members</span>
-                <span class="meta-item"><strong>9</strong> gatherings</span>
-              </div>
-              <span class="text-xs text-muted">Est. 2025</span>
-            </div>
-          </a>
-
+        <div class="card-grid" id="groups-grid" style="margin-bottom: 4rem;">
+          <p class="text-muted text-sm">Loading&hellip;</p>
         </div>
-
-        <hr class="groove">
-
-        <!-- Sample Group Detail (expanded view) -->
-        <section>
-          <p class="label mb-2">Group Detail</p>
-          <h2 style="margin-bottom: 2rem;">The Original</h2>
-
-          <div class="group-detail-section">
-            <div>
-              <!-- Recent Gatherings -->
-              <h3 style="margin-bottom: 1.25rem; font-family: 'Inter', sans-serif; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted);">Recent Gatherings</h3>
-
-              <div class="numbered-section">
-
-                <div class="gathering-entry">
-                  <span class="gathering-date">Apr 2026</span>
-                  <div>
-                    <p class="text-sm" style="color: var(--text); margin-bottom: 0.5rem;">Gathering #90 &mdash; Mike</p>
-                    <div class="gathering-albums">
-                      <span class="tag">Bob Dylan &mdash; <em>Blood on the Tracks</em></span>
-                      <span class="tag">Neil Young &mdash; <em>Harvest Moon</em></span>
-                      <span class="tag">Wilco &mdash; <em>Yankee Hotel Foxtrot</em></span>
-                    </div>
-                  </div>
-                  <span class="text-xs text-muted">5 attendees</span>
-                </div>
-
-                <div class="gathering-entry">
-                  <span class="gathering-date">Mar 2026</span>
-                  <div>
-                    <p class="text-sm" style="color: var(--text); margin-bottom: 0.5rem;">Gathering #89 &mdash; Seth</p>
-                    <div class="gathering-albums">
-                      <span class="tag">Phoebe Bridgers &mdash; <em>Punisher</em></span>
-                      <span class="tag">Radiohead &mdash; <em>OK Computer</em></span>
-                      <span class="tag">Bruce Springsteen &mdash; <em>Nebraska</em></span>
-                    </div>
-                  </div>
-                  <span class="text-xs text-muted">4 attendees</span>
-                </div>
-
-                <div class="gathering-entry">
-                  <span class="gathering-date">Feb 2026</span>
-                  <div>
-                    <p class="text-sm" style="color: var(--text); margin-bottom: 0.5rem;">Gathering #88 &mdash; Kevin</p>
-                    <div class="gathering-albums">
-                      <span class="tag">Tom Waits &mdash; <em>Rain Dogs</em></span>
-                      <span class="tag">The National &mdash; <em>Trouble Will Find Me</em></span>
-                      <span class="tag">Gillian Welch &mdash; <em>Time (The Revelator)</em></span>
-                    </div>
-                  </div>
-                  <span class="text-xs text-muted">5 attendees</span>
-                </div>
-
-              </div>
-            </div>
-
-            <!-- Group sidebar info -->
-            <aside class="card" style="position: sticky; top: calc(var(--nav-height) + 2rem);">
-              <p class="text-xs text-muted mb-1" style="letter-spacing: 0.1em; text-transform: uppercase;">Members</p>
-              <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
-                <div class="flex items-center gap-2">
-                  <div class="avatar" style="width:36px; height:36px; font-size: 0.9rem;">C</div>
-                  <span class="text-sm">Chris</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="avatar" style="width:36px; height:36px; font-size: 0.9rem;">B</div>
-                  <span class="text-sm">Ben</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="avatar" style="width:36px; height:36px; font-size: 0.9rem;">K</div>
-                  <span class="text-sm">Kevin</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="avatar" style="width:36px; height:36px; font-size: 0.9rem;">S</div>
-                  <span class="text-sm">Seth</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="avatar" style="width:36px; height:36px; font-size: 0.9rem;">M</div>
-                  <span class="text-sm">Mike</span>
-                </div>
-              </div>
-              <a href="profile.html" class="btn btn-primary" style="width: 100%; justify-content: center;">Join this Group</a>
-            </aside>
-          </div>
-        </section>
 
       </div>
     </div>
@@ -238,5 +74,6 @@
   </footer>
 
   <script src="js/main.js"></script>
+  <script src="js/groups.js"></script>
 </body>
 </html>

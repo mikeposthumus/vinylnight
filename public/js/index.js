@@ -22,7 +22,7 @@
             '<span class="meta-item"><strong>' + (g.member_count || 0) + '</strong> members</span>' +
             '<span class="meta-item">' + gatheringsLabel + '</span>' +
           '</div>' +
-          '<a href="group.html?group=' + esc(g.slug) + '" class="btn btn-ghost text-xs">View &rarr;</a>' +
+          '<a href="/group/' + esc(g.slug) + '" class="btn btn-ghost text-xs">View &rarr;</a>' +
         '</div>' +
       '</div>';
     }).join('');

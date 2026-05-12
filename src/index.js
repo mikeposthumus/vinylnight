@@ -18,6 +18,9 @@ export default {
     }
 
     if (!url.pathname.startsWith('/api/')) {
+      if (url.pathname.match(/^\/group\/[^/]+\/?$/)) {
+        return env.ASSETS.fetch(new Request(new URL('/group.html', url).toString(), request));
+      }
       return env.ASSETS.fetch(request);
     }
 
@@ -295,15 +298,24 @@ async function handleListGroups(request, env) {
   const groups = await env.DB.prepare(`
     SELECT g.*,
       COUNT(DISTINCT CASE WHEN gm.status = 'active' THEN gm.id END) AS member_count,
-      COUNT(DISTINCT e.id) AS episode_count
+      COUNT(DISTINCT e.id) AS episode_count,
+      GROUP_CONCAT(DISTINCT gg.genre) AS genres_csv
     FROM groups g
     LEFT JOIN group_members gm ON gm.group_id = g.id
+    LEFT JOIN group_genres gg ON gg.group_id = g.id
     LEFT JOIN seasons s ON s.group_id = g.id
     LEFT JOIN episodes e ON e.season_id = s.id
     GROUP BY g.id
     ORDER BY g.created_at
   `).all();
-  return json({ groups: groups.results });
+
+  const result = groups.results.map(g => ({
+    ...g,
+    genres: g.genres_csv ? g.genres_csv.split(',') : [],
+    genres_csv: undefined,
+  }));
+
+  return json({ groups: result });
 }
 
 async function handleGetGroup(request, env, path) {
