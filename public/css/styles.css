@@ -421,7 +421,6 @@ ul { list-style: none; }
   content: '';
   position: absolute;
   inset: 6px;
-  border: 0px solid var(--border-subtle);
   pointer-events: none;
   opacity: 0.5;
   z-index: 3;
