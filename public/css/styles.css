@@ -1530,6 +1530,9 @@ textarea {
 
 .section-tab.active { color: var(--text); border-bottom-color: var(--accent); }
 
+.tab-panel         { display: none; }
+.tab-panel.active  { display: block; }
+
 .episode-album-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
