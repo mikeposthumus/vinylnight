@@ -18,7 +18,18 @@ export default {
     }
 
     if (!url.pathname.startsWith('/api/')) {
-      if (url.pathname.match(/^\/group\/[^/]+\/?$/)) {
+      const CLEAN_ROUTES = {
+        '/groups':        '/groups.html',
+        '/profile':       '/profile.html',
+        '/about':         '/about.html',
+        '/how-to-start':  '/how-to-start.html',
+        '/bylaws':        '/bylaws.html',
+      };
+      const cleanTarget = CLEAN_ROUTES[url.pathname] || CLEAN_ROUTES[url.pathname.replace(/\/$/, '')];
+      if (cleanTarget) {
+        return env.ASSETS.fetch(new Request(new URL(cleanTarget, url).toString(), request));
+      }
+      if (url.pathname.match(/^\/group\/[^/.]+\/?$/)) {
         return env.ASSETS.fetch(new Request(new URL('/group.html', url).toString(), request));
       }
       return env.ASSETS.fetch(request);

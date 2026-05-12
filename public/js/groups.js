@@ -1,16 +1,28 @@
 var allGroups = [];
 
 (async function init() {
-  /* Update nav if signed in */
+  var isSignedIn = false;
+
+  /* Check auth, update nav + CTA */
   try {
     var me = await fetch('/api/auth/me');
     if (me.ok) {
       var meData = await me.json();
+      isSignedIn = true;
       var navLink = document.getElementById('nav-auth-link');
       navLink.textContent = meData.user.username;
-      navLink.href = 'profile.html';
+      navLink.href = '/profile.html';
     }
   } catch (e) { /* guest */ }
+
+  var cta = document.getElementById('groups-cta');
+  if (isSignedIn) {
+    cta.innerHTML = '<a href="/how-to-start.html" class="btn btn-outline">+ Start a Group</a>';
+  } else {
+    cta.innerHTML = '<a href="/profile.html" class="btn btn-outline">Sign In</a>';
+    var banner = document.getElementById('guest-banner');
+    if (banner) banner.style.display = '';
+  }
 
   /* Load groups */
   var grid = document.getElementById('groups-grid');
