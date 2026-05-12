@@ -478,8 +478,24 @@ ul { list-style: none; }
   min-width: 0;
 }
 
+.album-sleeve-meta {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.album-sleeve-meta-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.album-sleeve-meta-right {
+  flex-shrink: 0;
+  text-align: right;
+}
+
 .album-sleeve-number {
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   color: var(--text-dim);
   letter-spacing: 0.1em;
   font-family: 'Playfair Display', serif;
@@ -487,7 +503,7 @@ ul { list-style: none; }
 }
 
 .album-sleeve-label {
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
   letter-spacing: 0.05em;
   margin-bottom: 0.1rem;
@@ -498,7 +514,7 @@ ul { list-style: none; }
 
 .album-sleeve-title {
   font-family: 'Playfair Display', serif;
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   color: var(--text);
   line-height: 1.25;
   overflow: hidden;
@@ -507,10 +523,10 @@ ul { list-style: none; }
 }
 
 .album-sleeve-contributor {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   color: var(--text-dim);
   letter-spacing: 0.05em;
-  margin-top: 0.25rem;
+  margin-top: 0.1rem;
 }
 
 .vinyl-del-btn {

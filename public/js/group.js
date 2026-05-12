@@ -1101,13 +1101,22 @@ function albumSleeveHtml(artist, album, contributor, artUrl, vinylId, playOrder,
   var delBtn = (canDelete && vinylId)
     ? '<button class="vinyl-del-btn" style="display:none;" onclick="deleteVinyl(\'' + esc(vinylId) + '\', this)" title="Remove album">Remove</button>'
     : '';
+  var rightMeta = (playOrder || contributor)
+    ? '<div class="album-sleeve-meta-right">' +
+        (playOrder ? '<p class="album-sleeve-number">#' + playOrder + '</p>' : '') +
+        (contributor ? '<p class="album-sleeve-contributor">' + esc(contributor) + '</p>' : '') +
+      '</div>'
+    : '';
   return '<div class="album-sleeve"' + extra + ' data-artist="' + esc(artist) + '" data-album="' + esc(album) + '">' +
     '<div class="album-sleeve-image">' + imgHtml + '</div>' +
     '<div class="album-sleeve-footer">' +
-      (playOrder ? '<p class="album-sleeve-number">#' + playOrder + '</p>' : '') +
-      '<p class="album-sleeve-label">' + esc(artist) + '</p>' +
-      '<p class="album-sleeve-title"><em>' + esc(album) + '</em></p>' +
-      (contributor ? '<p class="album-sleeve-contributor">' + esc(contributor) + '</p>' : '') +
+      '<div class="album-sleeve-meta">' +
+        '<div class="album-sleeve-meta-left">' +
+          '<p class="album-sleeve-label">' + esc(artist) + '</p>' +
+          '<p class="album-sleeve-title"><em>' + esc(album) + '</em></p>' +
+        '</div>' +
+        rightMeta +
+      '</div>' +
       delBtn +
     '</div>' +
   '</div>';
