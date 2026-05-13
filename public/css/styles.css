@@ -545,6 +545,8 @@ ul { list-style: none; }
 }
 .album-sleeve:hover .vinyl-del-btn,
 .album-sleeve:hover .vinyl-change-art-btn { display: block; }
+.ep-albums-wrap .vinyl-del-btn,
+.ep-albums-wrap .vinyl-change-art-btn     { display: block; }
 .vinyl-del-btn:hover        { color: var(--accent-bright); }
 .vinyl-change-art-btn:hover { color: var(--text-muted); }
 

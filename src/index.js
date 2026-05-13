@@ -773,9 +773,9 @@ async function handleAddVinyl(request, env, path) {
   const episode = await env.DB.prepare(`
     SELECT e.id, s.group_id FROM episodes e
     JOIN seasons s ON s.id = e.season_id
-    WHERE e.id = ? AND e.status IN ('current', 'upcoming')
+    WHERE e.id = ?
   `).bind(episodeId).first();
-  if (!episode) return json({ error: 'Episode not found or not open' }, 404);
+  if (!episode) return json({ error: 'Episode not found' }, 404);
 
   const membership = await env.DB.prepare(
     "SELECT id FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"
@@ -833,9 +833,6 @@ async function handleDeleteVinyl(request, env, path) {
     WHERE ev.id = ?
   `).bind(vinylId).first();
   if (!vinyl) return json({ error: 'Not found' }, 404);
-  if (!['current', 'upcoming'].includes(vinyl.status)) {
-    return json({ error: 'Cannot delete from a completed episode' }, 403);
-  }
 
   const membership = await env.DB.prepare(
     "SELECT id FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'"

@@ -298,49 +298,6 @@ function renderThisSeason(season, episodes, vinylsByEp) {
           ? '<p class="text-xs text-muted" style="margin-top:0.2rem;">' + attendeeList.map(esc).join(', ') + '</p>'
           : '');
 
-    var hostOptions = '<option value="">— not set —</option>' +
-      members.map(function(m) {
-        var sel = ep.host_username === m.username ? ' selected' : '';
-        return '<option value="' + esc(m.username) + '"' + sel + '>' + esc(m.username) + '</option>';
-      }).join('');
-
-    var attendeeCheckboxes = members.map(function(m) {
-      var chk = attendeeList.indexOf(m.username) !== -1 ? ' checked' : '';
-      return '<label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">' +
-        '<input type="checkbox" name="ep-att-' + ep.id + '" value="' + esc(m.username) + '"' + chk + '> ' +
-        '<span style="font-size:0.88rem;">' + esc(m.username) + '</span>' +
-      '</label>';
-    }).join('');
-
-    var inlineEditor =
-      '<div id="ep-editor-' + ep.id + '" style="display:none;padding:1.25rem;background:var(--surface-raised);border:1px solid var(--border-subtle);margin-bottom:1.25rem;">' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">' +
-          '<div class="form-group" style="margin-bottom:0;"><label>Date</label>' +
-            '<input type="date" id="ep-date-' + ep.id + '" value="' + esc(ep.date || '') + '"></div>' +
-          '<div class="form-group" style="margin-bottom:0;"><label>Host</label>' +
-            '<select id="ep-host-' + ep.id + '">' + hostOptions + '</select></div>' +
-        '</div>' +
-        (members.length
-          ? '<div class="form-group" style="margin-bottom:1.25rem;"><label>Who attended?</label>' +
-              '<div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;padding-top:0.25rem;">' + attendeeCheckboxes + '</div></div>'
-          : '') +
-        '<div style="display:flex;gap:0.75rem;">' +
-          '<button class="btn btn-primary" style="font-size:0.78rem;" onclick="saveEpInline(\'' + ep.id + '\')">Save</button>' +
-          '<button class="btn btn-ghost" style="font-size:0.78rem;" onclick="toggleEpInlineEditor(\'' + ep.id + '\')">Cancel</button>' +
-        '</div>' +
-        '<div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-subtle);">' +
-          '<div id="del-confirm-' + ep.id + '" style="display:none;margin-bottom:0.5rem;">' +
-            '<p class="text-xs text-muted" style="margin-bottom:0.5rem;">Type <strong>delete</strong> to permanently remove this episode and all its albums.</p>' +
-            '<div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">' +
-              '<input type="text" id="del-input-' + ep.id + '" placeholder="delete" style="width:130px;margin:0;" oninput="checkDeleteInput(\'' + ep.id + '\')">' +
-              '<button id="del-btn-' + ep.id + '" class="btn" style="font-size:0.78rem;background:var(--accent-bright);color:#fff;border-color:var(--accent-bright);opacity:0.4;cursor:not-allowed;" disabled onclick="executeDeleteEpisode(\'' + ep.id + '\')">Delete Forever</button>' +
-              '<button class="btn btn-ghost" style="font-size:0.78rem;" onclick="document.getElementById(\'del-confirm-' + ep.id + '\').style.display=\'none\'">Cancel</button>' +
-            '</div>' +
-          '</div>' +
-          '<button class="ep-edit-btn" style="font-size:0.78rem;background:none;border:none;cursor:pointer;color:var(--accent-bright);padding:0;" onclick="document.getElementById(\'del-confirm-' + ep.id + '\').style.display=\'\'">Delete Episode</button>' +
-        '</div>' +
-      '</div>';
-
     return '<details class="season">' +
       '<summary>' +
         '<div style="flex:1;min-width:0;">' +
@@ -357,7 +314,7 @@ function renderThisSeason(season, episodes, vinylsByEp) {
         '</div>' +
       '</summary>' +
       '<div style="padding-top:1.25rem;padding-left:1.5rem;">' +
-        inlineEditor +
+        buildEpInlineEditor(ep, epVinyls, members) +
         (albumsHtml
           ? '<div class="episode-album-grid">' + albumsHtml + '</div>'
           : '<p class="text-muted text-sm">No albums recorded.</p>') +
@@ -454,49 +411,6 @@ async function loadSeasonEpisodes(seasonId) {
           ? '<p class="text-xs text-muted" style="margin-top:0.2rem;">' + attendeeList.map(esc).join(', ') + '</p>'
           : '');
 
-    var hostOptions = '<option value="">— not set —</option>' +
-      members.map(function(m) {
-        var sel = ep.host_username === m.username ? ' selected' : '';
-        return '<option value="' + esc(m.username) + '"' + sel + '>' + esc(m.username) + '</option>';
-      }).join('');
-
-    var attendeeCheckboxes = members.map(function(m) {
-      var chk = attendeeList.indexOf(m.username) !== -1 ? ' checked' : '';
-      return '<label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">' +
-        '<input type="checkbox" name="ep-att-' + ep.id + '" value="' + esc(m.username) + '"' + chk + '> ' +
-        '<span style="font-size:0.88rem;">' + esc(m.username) + '</span>' +
-      '</label>';
-    }).join('');
-
-    var inlineEditor =
-      '<div id="ep-editor-' + ep.id + '" style="display:none;padding:1.25rem;background:var(--surface-raised);border:1px solid var(--border-subtle);margin-bottom:1.25rem;">' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">' +
-          '<div class="form-group" style="margin-bottom:0;"><label>Date</label>' +
-            '<input type="date" id="ep-date-' + ep.id + '" value="' + esc(ep.date || '') + '"></div>' +
-          '<div class="form-group" style="margin-bottom:0;"><label>Host</label>' +
-            '<select id="ep-host-' + ep.id + '">' + hostOptions + '</select></div>' +
-        '</div>' +
-        (members.length
-          ? '<div class="form-group" style="margin-bottom:1.25rem;"><label>Who attended?</label>' +
-              '<div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;padding-top:0.25rem;">' + attendeeCheckboxes + '</div></div>'
-          : '') +
-        '<div style="display:flex;gap:0.75rem;">' +
-          '<button class="btn btn-primary" style="font-size:0.78rem;" onclick="saveEpInline(\'' + ep.id + '\')">Save</button>' +
-          '<button class="btn btn-ghost" style="font-size:0.78rem;" onclick="toggleEpInlineEditor(\'' + ep.id + '\')">Cancel</button>' +
-        '</div>' +
-        '<div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-subtle);">' +
-          '<div id="del-confirm-' + ep.id + '" style="display:none;margin-bottom:0.5rem;">' +
-            '<p class="text-xs text-muted" style="margin-bottom:0.5rem;">Type <strong>delete</strong> to permanently remove this episode and all its albums.</p>' +
-            '<div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">' +
-              '<input type="text" id="del-input-' + ep.id + '" placeholder="delete" style="width:130px;margin:0;" oninput="checkDeleteInput(\'' + ep.id + '\')">' +
-              '<button id="del-btn-' + ep.id + '" class="btn" style="font-size:0.78rem;background:var(--accent-bright);color:#fff;border-color:var(--accent-bright);opacity:0.4;cursor:not-allowed;" disabled onclick="executeDeleteEpisode(\'' + ep.id + '\')">Delete Forever</button>' +
-              '<button class="btn btn-ghost" style="font-size:0.78rem;" onclick="document.getElementById(\'del-confirm-' + ep.id + '\').style.display=\'none\'">Cancel</button>' +
-            '</div>' +
-          '</div>' +
-          '<button class="ep-edit-btn" style="font-size:0.78rem;background:none;border:none;cursor:pointer;color:var(--accent-bright);padding:0;" onclick="document.getElementById(\'del-confirm-' + ep.id + '\').style.display=\'\'">Delete Episode</button>' +
-        '</div>' +
-      '</div>';
-
     return '<details class="season">' +
       '<summary>' +
         '<div style="flex:1;min-width:0;">' +
@@ -511,7 +425,7 @@ async function loadSeasonEpisodes(seasonId) {
         '</div>' +
       '</summary>' +
       '<div style="padding-top:1.25rem;padding-left:1.5rem;">' +
-        inlineEditor +
+        buildEpInlineEditor(ep, epVinyls, members) +
         (albumsHtml
           ? '<div class="episode-album-grid">' + albumsHtml + '</div>'
           : '<p class="text-muted text-sm">No albums recorded.</p>') +
@@ -753,6 +667,222 @@ async function executeDeleteEpisode(epId) {
   } catch(e) { alert('Could not delete episode.'); }
 }
 
+/* ── Episode inline editor builder ──────────────────────────── */
+function buildEpInlineEditor(ep, epVinyls, members) {
+  var hostOptions = '<option value="">— not set —</option>' +
+    members.map(function(m) {
+      var sel = ep.host_username === m.username ? ' selected' : '';
+      return '<option value="' + esc(m.username) + '"' + sel + '>' + esc(m.username) + '</option>';
+    }).join('');
+
+  var attendeeList = ep.attendees || [];
+  var attendeeCheckboxes = members.filter(function(m) { return !m.is_guest; }).map(function(m) {
+    var chk = attendeeList.indexOf(m.username) !== -1 ? ' checked' : '';
+    return '<label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">' +
+      '<input type="checkbox" name="ep-att-' + ep.id + '" value="' + esc(m.username) + '"' + chk + '> ' +
+      '<span style="font-size:0.88rem;">' + esc(m.username) + '</span>' +
+    '</label>';
+  }).join('');
+
+  var contribOptions = '<option value="">Select contributor…</option>' +
+    members.map(function(m) {
+      return '<option value="' + esc(m.username) + '">' + esc(m.username) + '</option>';
+    }).join('');
+
+  var albumsHtml = epVinyls.map(function(v) {
+    return albumSleeveHtml(v.artist, v.album_title, v.contributor_username, v.art_url, v.id, v.play_order, true);
+  }).join('');
+
+  var id = ep.id;
+  return (
+    '<div id="ep-editor-' + id + '" style="display:none;padding:1.25rem;background:var(--surface-raised);border:1px solid var(--border-subtle);margin-bottom:1.25rem;">' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">' +
+        '<div class="form-group" style="margin-bottom:0;"><label>Date</label>' +
+          '<input type="date" id="ep-date-' + id + '" value="' + esc(ep.date || '') + '"></div>' +
+        '<div class="form-group" style="margin-bottom:0;"><label>Host</label>' +
+          '<select id="ep-host-' + id + '">' + hostOptions + '</select></div>' +
+      '</div>' +
+      (members.length
+        ? '<div class="form-group" style="margin-bottom:1.25rem;"><label>Who attended?</label>' +
+            '<div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;padding-top:0.25rem;">' + attendeeCheckboxes + '</div></div>'
+        : '') +
+      '<div style="display:flex;gap:0.75rem;margin-bottom:1.5rem;">' +
+        '<button class="btn btn-primary" style="font-size:0.78rem;" onclick="saveEpInline(\'' + id + '\')">Save</button>' +
+        '<button class="btn btn-ghost"   style="font-size:0.78rem;" onclick="toggleEpInlineEditor(\'' + id + '\')">Cancel</button>' +
+      '</div>' +
+      '<div style="border-top:1px solid var(--border-subtle);padding-top:1.25rem;">' +
+        '<p class="label mb-3">Selections</p>' +
+        '<div class="episode-album-grid ep-albums-wrap" id="ep-grid-' + id + '">' +
+          (albumsHtml || '<p class="text-muted text-sm" style="grid-column:1/-1;padding-bottom:0.5rem;">No albums recorded.</p>') +
+        '</div>' +
+        '<div class="add-album-row" style="margin-top:1.25rem;">' +
+          '<div>' +
+            '<label>Contributor</label>' +
+            '<select id="ep-add-contributor-' + id + '">' + contribOptions + '</select>' +
+          '</div>' +
+          '<div><label>Artist</label><input type="text" id="ep-add-artist-' + id + '" placeholder="Artist name" oninput="fetchEpAlbumArt(\'' + id + '\')"></div>' +
+          '<div><label>Album</label><input type="text" id="ep-add-album-title-' + id + '" placeholder="Album title" oninput="fetchEpAlbumArt(\'' + id + '\')"></div>' +
+          '<div><label>Order</label><input type="number" id="ep-add-play-order-' + id + '" placeholder="#" min="1" max="99"></div>' +
+          '<div style="display:flex;align-items:flex-end;gap:0.75rem;">' +
+            '<div class="art-preview" id="ep-art-preview-' + id + '" title="Album art preview"><div class="art-preview-icon"></div></div>' +
+            '<button type="button" class="btn btn-primary" onclick="addEpAlbum(\'' + id + '\')">Add</button>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:1rem;margin-top:0.5rem;flex-wrap:wrap;">' +
+          '<p class="form-hint" style="margin:0;">Art is fetched automatically as you type.</p>' +
+          '<button id="ep-art-change-cover-' + id + '" type="button" class="btn btn-ghost" style="display:none;font-size:0.75rem;padding:0.2rem 0.6rem;" onclick="openEpArtUrlInput(\'' + id + '\')">Change cover</button>' +
+        '</div>' +
+        '<div id="ep-art-url-input-wrap-' + id + '" style="display:none;margin-top:0.5rem;max-width:480px;">' +
+          '<div style="display:flex;gap:0.5rem;align-items:center;">' +
+            '<input type="url" id="ep-art-url-input-' + id + '" placeholder="Paste image URL" style="flex:1;margin:0;font-size:0.85rem;">' +
+            '<button type="button" class="btn btn-primary" style="font-size:0.78rem;" onclick="applyEpPastedArt(\'' + id + '\')">Apply</button>' +
+            '<button type="button" class="btn btn-ghost"  style="font-size:0.78rem;" onclick="cancelEpArtUrlInput(\'' + id + '\')">Cancel</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-subtle);">' +
+        '<div id="del-confirm-' + id + '" style="display:none;margin-bottom:0.5rem;">' +
+          '<p class="text-xs text-muted" style="margin-bottom:0.5rem;">Type <strong>delete</strong> to permanently remove this episode and all its albums.</p>' +
+          '<div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">' +
+            '<input type="text" id="del-input-' + id + '" placeholder="delete" style="width:130px;margin:0;" oninput="checkDeleteInput(\'' + id + '\')">' +
+            '<button id="del-btn-' + id + '" class="btn" style="font-size:0.78rem;background:var(--accent-bright);color:#fff;border-color:var(--accent-bright);opacity:0.4;cursor:not-allowed;" disabled onclick="executeDeleteEpisode(\'' + id + '\')">Delete Forever</button>' +
+            '<button class="btn btn-ghost" style="font-size:0.78rem;" onclick="document.getElementById(\'del-confirm-' + id + '\').style.display=\'none\'">Cancel</button>' +
+          '</div>' +
+        '</div>' +
+        '<button class="ep-edit-btn" style="font-size:0.78rem;background:none;border:none;cursor:pointer;color:var(--accent-bright);padding:0;" onclick="document.getElementById(\'del-confirm-' + id + '\').style.display=\'\'">Delete Episode</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+/* ── Episode inline editor – art & add album ─────────────────── */
+var epArtTimers     = {};
+var epArtLastStates = {};
+
+function fetchEpAlbumArt(epId) {
+  clearTimeout(epArtTimers[epId]);
+  var artist  = (document.getElementById('ep-add-artist-'      + epId) || {}).value || '';
+  var album   = (document.getElementById('ep-add-album-title-' + epId) || {}).value || '';
+  var preview = document.getElementById('ep-art-preview-' + epId);
+  if (!preview) return;
+  artist = artist.trim(); album = album.trim();
+  if (!artist || !album) { setEpArtPreviewEmpty(epId, preview); return; }
+  var last = epArtLastStates[epId] || {};
+  if (artist === last.artist && album === last.album) return;
+  epArtTimers[epId] = setTimeout(function() {
+    var cur = epArtLastStates[epId] || {};
+    if (artist === cur.artist && album === cur.album) return;
+    epArtLastStates[epId] = { artist: artist, album: album };
+    preview.classList.add('loading');
+    preview.innerHTML = '';
+    fetch('/api/artwork?artist=' + encodeURIComponent(artist) + '&album=' + encodeURIComponent(album))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        preview.classList.remove('loading');
+        var imgUrl  = data.thumbnailUrl || data.imageUrl;
+        var fullUrl = data.imageUrl     || data.thumbnailUrl;
+        if (imgUrl) {
+          preview.innerHTML = '<img src="' + esc(imgUrl) + '" alt="Album art">';
+          preview.dataset.artUrl = fullUrl;
+          showEpChangeCoverBtn(epId, data.confidence);
+        } else {
+          setEpArtPreviewEmpty(epId, preview);
+        }
+      }).catch(function() {
+        preview.classList.remove('loading');
+        setEpArtPreviewEmpty(epId, preview);
+      });
+  }, 600);
+}
+
+function setEpArtPreviewEmpty(epId, preview) {
+  if (!preview) preview = document.getElementById('ep-art-preview-' + epId);
+  if (preview) { preview.innerHTML = '<div class="art-preview-icon"></div>'; delete preview.dataset.artUrl; }
+  var btn = document.getElementById('ep-art-change-cover-' + epId);
+  if (btn) btn.style.display = 'none';
+  var wrap = document.getElementById('ep-art-url-input-wrap-' + epId);
+  if (wrap) wrap.style.display = 'none';
+}
+
+function showEpChangeCoverBtn(epId, confidence) {
+  var btn = document.getElementById('ep-art-change-cover-' + epId);
+  if (!btn) return;
+  btn.textContent = confidence === 'medium' ? 'Wrong cover?' : 'Change cover';
+  btn.style.display = '';
+}
+
+function openEpArtUrlInput(epId) {
+  var wrap = document.getElementById('ep-art-url-input-wrap-' + epId);
+  var inp  = document.getElementById('ep-art-url-input-'      + epId);
+  if (wrap) wrap.style.display = '';
+  if (inp)  inp.focus();
+}
+
+function cancelEpArtUrlInput(epId) {
+  var wrap = document.getElementById('ep-art-url-input-wrap-' + epId);
+  var inp  = document.getElementById('ep-art-url-input-'      + epId);
+  if (wrap) wrap.style.display = 'none';
+  if (inp)  inp.value = '';
+}
+
+function applyEpPastedArt(epId) {
+  var inp     = document.getElementById('ep-art-url-input-'  + epId);
+  var preview = document.getElementById('ep-art-preview-'    + epId);
+  if (!inp || !preview) return;
+  var url = inp.value.trim();
+  if (url) {
+    preview.innerHTML = '<img src="' + esc(url) + '" alt="Album art">';
+    preview.dataset.artUrl = url;
+    epArtLastStates[epId] = {};
+  }
+  cancelEpArtUrlInput(epId);
+}
+
+async function addEpAlbum(epId) {
+  var artist    = ((document.getElementById('ep-add-artist-'      + epId) || {}).value || '').trim();
+  var album     = ((document.getElementById('ep-add-album-title-' + epId) || {}).value || '').trim();
+  var preview   = document.getElementById('ep-art-preview-'    + epId);
+  var artUrl    = preview ? (preview.dataset.artUrl || null) : null;
+  var contribEl = document.getElementById('ep-add-contributor-' + epId);
+  var orderEl   = document.getElementById('ep-add-play-order-'  + epId);
+  var contributor = contribEl ? contribEl.value : '';
+  var orderVal  = parseInt((orderEl ? orderEl.value : ''), 10);
+  var playOrder = Number.isFinite(orderVal) && orderVal > 0 ? orderVal : null;
+  if (!artist || !album) return;
+
+  var res = await fetch('/api/episodes/' + epId + '/vinyls', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      artist:               artist,
+      album_title:          album,
+      art_url:              artUrl,
+      contributor_username: contributor || null,
+      play_order:           playOrder,
+    }),
+  });
+
+  if (res.ok) {
+    var data = await res.json();
+    var grid = document.getElementById('ep-grid-' + epId);
+    if (grid) {
+      var noMsg = grid.querySelector('p.text-muted');
+      if (noMsg) noMsg.remove();
+      var tmp = document.createElement('div');
+      tmp.innerHTML = albumSleeveHtml(data.artist, data.album_title, data.contributor_username, artUrl, data.id, data.play_order, true);
+      grid.appendChild(tmp.firstChild);
+    }
+    if (document.getElementById('ep-add-artist-'      + epId)) document.getElementById('ep-add-artist-'      + epId).value = '';
+    if (document.getElementById('ep-add-album-title-' + epId)) document.getElementById('ep-add-album-title-' + epId).value = '';
+    if (document.getElementById('ep-add-play-order-'  + epId)) document.getElementById('ep-add-play-order-'  + epId).value = '';
+    epArtLastStates[epId] = {};
+    setEpArtPreviewEmpty(epId);
+  } else {
+    var err = await res.json();
+    alert(err.error || 'Could not add album.');
+  }
+}
+
 /* ── Edit group ─────────────────────────────────────────────── */
 function toggleGroupEditor() {
   var editor = document.getElementById('group-editor');
@@ -948,7 +1078,12 @@ async function deleteVinyl(vinylId, btn) {
   btn.disabled = true;
   var res = await fetch('/api/vinyls/' + vinylId, { method: 'DELETE' });
   if (res.ok) {
-    await loadCurrentSeason();
+    var sleeve = btn.closest('.album-sleeve');
+    if (sleeve && sleeve.closest('.ep-albums-wrap')) {
+      sleeve.remove();
+    } else {
+      await loadCurrentSeason();
+    }
   } else {
     btn.disabled = false;
     var err = await res.json();
