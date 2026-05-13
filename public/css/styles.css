@@ -577,6 +577,7 @@ input[type="email"],
 input[type="password"],
 input[type="url"],
 input[type="number"],
+input[type="date"],
 textarea,
 select {
   width: 100%;
@@ -591,6 +592,18 @@ select {
   transition: border-color 0.15s;
   outline: none;
   appearance: none;
+}
+
+select {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a8c5c'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  padding-right: 2.25rem;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.55) sepia(1) hue-rotate(90deg) saturate(0.6);
+  cursor: pointer;
 }
 
 input:focus,

@@ -957,6 +957,51 @@ async function executeDeleteGroup() {
   } catch(e) { alert('Could not delete group.'); }
 }
 
+/* ── Sleeve cover-art paste ─────────────────────────────────── */
+function openSleeveArtInput(sleeve) {
+  var wrap = sleeve ? sleeve.querySelector('.sleeve-art-input-wrap') : null;
+  if (!wrap) return;
+  wrap.style.display = '';
+  var inp = wrap.querySelector('.sleeve-art-url');
+  if (inp) { inp.value = ''; inp.focus(); }
+}
+
+function closeSleeveArtInput(sleeve) {
+  var wrap = sleeve ? sleeve.querySelector('.sleeve-art-input-wrap') : null;
+  if (wrap) wrap.style.display = 'none';
+}
+
+async function applySleeveArtUrl(sleeve) {
+  if (!sleeve) return;
+  var vinylId = sleeve.dataset.vinylId;
+  var wrap    = sleeve.querySelector('.sleeve-art-input-wrap');
+  var inp     = wrap ? wrap.querySelector('.sleeve-art-url') : null;
+  var url     = inp ? inp.value.trim() : '';
+  if (!url || !vinylId) return;
+
+  try {
+    var res = await fetch('/api/vinyls/' + vinylId + '/art', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: url }),
+    });
+    if (!res.ok) { alert('Could not save artwork URL.'); return; }
+    var imgContainer = sleeve.querySelector('.album-sleeve-image');
+    if (imgContainer) {
+      var img = document.createElement('img');
+      img.src = url;
+      img.alt = (sleeve.dataset.artist || '') + ' — ' + (sleeve.dataset.album || '');
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+      imgContainer.innerHTML = '';
+      imgContainer.appendChild(img);
+      sleeve.onclick = null;
+    }
+    closeSleeveArtInput(sleeve);
+  } catch(e) {
+    alert('Could not save artwork URL.');
+  }
+}
+
 /* ── Album art ──────────────────────────────────────────────── */
 var artTimer      = null;
 var artLastArtist = '';
@@ -1339,7 +1384,16 @@ function albumSleeveHtml(artist, album, contributor, artUrl, vinylId, playOrder,
     ? '<button class="vinyl-del-btn" onclick="deleteVinyl(\'' + esc(vinylId) + '\', this)" title="Remove album">Remove</button>'
     : '';
   var changeArtBtn = (canDelete && vinylId)
-    ? '<button class="vinyl-change-art-btn" onclick="fetchSleeveArt(this.closest(\'.album-sleeve\'))" title="Re-fetch cover art">Change cover</button>'
+    ? '<button class="vinyl-change-art-btn" onclick="openSleeveArtInput(this.closest(\'.album-sleeve\'))" title="Change cover art">Change cover</button>'
+    : '';
+  var artInputWrap = (canDelete && vinylId)
+    ? '<div class="sleeve-art-input-wrap" style="display:none;margin-top:0.4rem;">' +
+        '<input type="url" class="sleeve-art-url" placeholder="Paste image URL" style="font-size:0.75rem;padding:0.35rem 0.6rem;margin:0;" onkeydown="if(event.key===\'Enter\')applySleeveArtUrl(this.closest(\'.album-sleeve\'))">' +
+        '<div style="display:flex;gap:0.4rem;margin-top:0.3rem;">' +
+          '<button class="btn btn-primary" style="font-size:0.7rem;padding:0.25rem 0.5rem;" onclick="applySleeveArtUrl(this.closest(\'.album-sleeve\'))">Apply</button>' +
+          '<button class="btn btn-ghost"   style="font-size:0.7rem;padding:0.25rem 0.5rem;" onclick="closeSleeveArtInput(this.closest(\'.album-sleeve\'))">Cancel</button>' +
+        '</div>' +
+      '</div>'
     : '';
   var rightMeta = (playOrder || contributor)
     ? '<div class="album-sleeve-meta-right">' +
@@ -1359,6 +1413,7 @@ function albumSleeveHtml(artist, album, contributor, artUrl, vinylId, playOrder,
       '</div>' +
       delBtn +
       changeArtBtn +
+      artInputWrap +
     '</div>' +
   '</div>';
 }

@@ -849,6 +849,13 @@ async function handleFetchVinylArt(request, env, path) {
     'SELECT id, artist, album_title, art_url FROM episode_vinyls WHERE id = ?'
   ).bind(vinylId).first();
   if (!vinyl) return json({ error: 'Not found' }, 404);
+
+  const body = await request.json().catch(() => ({}));
+  if (body && body.url) {
+    await env.DB.prepare('UPDATE episode_vinyls SET art_url = ? WHERE id = ?').bind(body.url, vinylId).run();
+    return json({ art_url: body.url });
+  }
+
   if (vinyl.art_url) return json({ art_url: vinyl.art_url });
 
   const result = await getAlbumArtwork({ artist: vinyl.artist, album: vinyl.album_title }, env);
